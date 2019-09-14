@@ -17,4 +17,6 @@ jobs:
           name: exec
           command: |
             yarn install --pure-lockfile
+            git config --global user.email "bokuweb12@gmail.com"
+            git config --global user.name "bokuweb"
             yarn deploy
