@@ -1,0 +1,20 @@
+version: 2.1
+executors:
+  default:
+    docker:
+      - image: bokuweb/node-go-with-browser:latest
+    working_directory: ~/test
+    environment:
+      - TZ: Asia/Tokyo
+
+jobs:
+  build:
+    executor:
+      name: default
+    steps:
+      - checkout
+      - run:
+          name: exec
+          command: |
+            yarn install --pure-lockfile
+            yarn deploy

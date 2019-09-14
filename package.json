@@ -1,0 +1,14 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/bokuweb/test",
+  "author": "bokuweb <bokuweb12@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "gh-pages": "^2.1.1"
+  }
+}
