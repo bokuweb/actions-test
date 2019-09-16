@@ -27,6 +27,9 @@ const run = async () => {
     ...repoInfo,
     commit_sha: head.object.sha
   });
+
+  console.log(headCommit);
+
   let tree = await octokit.git.getTree({
     ...repoInfo,
     tree_sha: headCommit.data.tree.sha,
@@ -57,18 +60,18 @@ const run = async () => {
   let a = tree.data.tree.pop();
   console.log(a);
 
-  await octokit.repos.createFile({
-    ...repoInfo,
-    path: "aaa/bbb",
-    message: "test",
-    content: "SGVsbG8="
-  });
+  // await octokit.repos.createFile({
+  //   ...repoInfo,
+  //   path: "aaa/bbb",
+  //   message: "test",
+  //   content: "SGVsbG8="
+  // });
 
-  /*
   const newTree = await octokit.git.createTree({
     ...repoInfo,
     tree: [a]
   });
+
   console.log("=1");
   const newCommit = await octokit.git.createCommit({
     ...repoInfo,
@@ -81,7 +84,6 @@ const run = async () => {
     ref: head.ref,
     sha: newCommit.data.sha
   });
-  */
 };
 
 run();
