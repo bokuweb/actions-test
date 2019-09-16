@@ -10,6 +10,11 @@ const octokit = new github.GitHub(myToken);
 const repoInfo = github.context.repo;
 
 console.log(repoInfo);
+console.log(
+  JSON.stringify(
+    require("fs").readFileSync(process.env.GITHUB_EVENT_PATH, "utf8")
+  )
+);
 core.debug(JSON.stringify(repoInfo));
 
 const run = async () => {
@@ -77,7 +82,15 @@ const run = async () => {
   // });
   // console.log("===============asdaa==");
 
-  tree.data.tree.pop();
+  const ref = await octokit.git.createRef({
+    ...repoInfo,
+    ref: "refs/heads/gh-pages-d2",
+    sha: headCommit.data.sha
+  });
+
+  console.log("++ref++");
+
+  // tree.data.tree.pop();
   tree.data.tree.push({
     path: "aaaaaaasad",
     mode: "100644",
@@ -87,7 +100,14 @@ const run = async () => {
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
-    tree: tree.data.tree
+    tree: [
+      {
+        path: "aaaaaaasad",
+        mode: "100644",
+        type: "blob",
+        sha: blob.data.sha
+      }
+    ]
   });
 
   console.log("=1");
@@ -107,7 +127,7 @@ const run = async () => {
 
   await octokit.git.updateRef({
     ...repoInfo,
-    ref: head.ref.replace("refs/", ""),
+    ref: ref.data.ref.replace("refs/", ""),
     sha: newCommit.data.sha
   });
   console.log("done");
