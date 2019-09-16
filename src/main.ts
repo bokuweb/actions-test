@@ -60,13 +60,13 @@ const run = async () => {
   // let a = tree.data.tree.pop();
   // console.log(a);
 
-  const b = await octokit.repos.createOrUpdateFile({
-    ...repoInfo,
-    path: "aaa/bbab",
-    message: "test",
-    content: "SGVsbG8=",
-    branch: "aaatest"
-  });
+  // const b = await octokit.repos.createOrUpdateFile({
+  //   ...repoInfo,
+  //   path: "aaa/bbab",
+  //   message: "test",
+  //   content: "SGVsbG8=",
+  //   branch: "aaatest"
+  // });
 
   // console.log("===============b", b);
   // await octokit.repos.deleteFile({
