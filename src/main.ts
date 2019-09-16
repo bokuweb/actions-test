@@ -1,22 +1,8 @@
-import * as core from "@actions/core";
-
-async function run() {
-  try {
-    const myInput = core.getInput("myInput");
-    core.debug(`Hello ${myInput}`);
-  } catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run();
-
-/*
 const github = require("@actions/github");
 const core = require("@actions/core");
 const reg = require("reg-cli");
 
-const myToken = core.getInput("myToken");
+const myToken = core.getInput("secret");
 
 const octokit = new github.GitHub(myToken);
 
@@ -69,5 +55,3 @@ const run = async () => {
 };
 
 run();
-
-*/

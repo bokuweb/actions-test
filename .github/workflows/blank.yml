@@ -11,3 +11,5 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
       - uses: bokuweb/actions-test@master
+        with: # Set the secret as an input
+          secret: ${{ secrets.WR_TOKEN }}
