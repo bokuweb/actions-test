@@ -21,55 +21,54 @@ const run = async () => {
   console.log(heads);
   console.log("++blob", blob);
 
-  for (let head of heads.data) {
-    console.log(`Test ${head.ref}`);
-    const headCommit = await octokit.git.getCommit({
-      ...repoInfo,
-      commit_sha: head.object.sha
-    });
-    let tree = await octokit.git.getTree({
-      ...repoInfo,
-      tree_sha: headCommit.data.tree.sha,
-      recursive: 1
-    });
+  let head = heads.data[0];
+  console.log(`Test ${head.ref}`);
+  const headCommit = await octokit.git.getCommit({
+    ...repoInfo,
+    commit_sha: head.object.sha
+  });
+  let tree = await octokit.git.getTree({
+    ...repoInfo,
+    tree_sha: headCommit.data.tree.sha,
+    recursive: 1
+  });
 
-    console.log("+++++");
-    // console.log(tree);
+  console.log("+++++");
+  // console.log(tree);
 
-    // for (let object of tree.data.tree) {
-    //   core.debug(`  Test ${object.path}`);
-    //   object.sha = blob.data.sha;
-    // }
+  // for (let object of tree.data.tree) {
+  //   core.debug(`  Test ${object.path}`);
+  //   object.sha = blob.data.sha;
+  // }
 
-    console.log(tree.data.tree[0]);
-    console.log(tree.data.tree[1]);
-    console.log(tree.data.tree[2]);
+  console.log(tree.data.tree[0]);
+  console.log(tree.data.tree[1]);
+  console.log(tree.data.tree[2]);
 
-    const n = tree.data.tree.push({
-      path: ".github",
-      mode: "040000",
-      type: "blob",
-      sha: blob.data.sha,
-      url: blob.data.url
-    });
-    console.log("=", n);
-    const newTree = await octokit.git.createTree({
-      ...repoInfo,
-      tree: tree.data.tree
-    });
-    console.log("=1");
-    const newCommit = await octokit.git.createCommit({
-      ...repoInfo,
-      tree: newTree.data.sha,
-      message: "Test",
-      parents: [headCommit.data.sha]
-    });
-    await octokit.git.updateRef({
-      ...repoInfo,
-      ref: head.ref,
-      sha: newCommit.data.sha
-    });
-  }
+  const n = tree.data.tree.push({
+    path: ".github",
+    mode: "100644",
+    type: "blob",
+    sha: blob.data.sha,
+    url: blob.data.url
+  });
+  console.log("=", n);
+  const newTree = await octokit.git.createTree({
+    ...repoInfo,
+    tree: tree.data.tree
+  });
+  console.log("=1");
+  const newCommit = await octokit.git.createCommit({
+    ...repoInfo,
+    tree: newTree.data.sha,
+    message: "Test",
+    parents: [headCommit.data.sha]
+  });
+  await octokit.git.updateRef({
+    ...repoInfo,
+    ref: head.ref,
+    sha: newCommit.data.sha
+  });
 };
 
 run();
