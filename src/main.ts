@@ -1,6 +1,5 @@
-const github = require("@actions/github");
-const core = require("@actions/core");
-const reg = require("reg-cli");
+import * as core from "@actions/core";
+import * as github from "@actions/github";
 
 const myToken = core.getInput("secret");
 
@@ -32,7 +31,6 @@ const run = async () => {
     });
 
     console.log(tree);
-    core.debug(tree);
     for (let object of tree.data.tree) {
       core.debug(`  Test ${object.path}`);
       object.sha = blob.data.sha;

@@ -12,4 +12,5 @@ jobs:
         run: echo Hello, world!
       - uses: bokuweb/actions-test@master
         with: # Set the secret as an input
-          secret: "${{ secrets.WR_TOKEN }}"
+          # secret: "${{ secrets.WR_TOKEN }}"
+          secret: "${{ secrets.GITHUB_TOKEN }}"
