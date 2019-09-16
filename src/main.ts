@@ -57,28 +57,29 @@ const run = async () => {
   //   content: "hello"
   // });
   // console.log("=", n);
-  let a = tree.data.tree.pop();
-  console.log(a);
+  // let a = tree.data.tree.pop();
+  // console.log(a);
 
   const b = await octokit.repos.createOrUpdateFile({
     ...repoInfo,
     path: "aaa/bbab",
     message: "test",
-    content: "SGVsbG8="
+    content: "SGVsbG8=",
+    branch: "aaatest"
   });
 
-  console.log("===============b", b);
-  await octokit.repos.deleteFile({
-    ...repoInfo,
-    path: "aaa",
-    message: "test",
-    sha: b.data.commit.sha
-  });
-  console.log("===============asdaa==");
+  // console.log("===============b", b);
+  // await octokit.repos.deleteFile({
+  //   ...repoInfo,
+  //   path: "aaa",
+  //   message: "test",
+  //   sha: b.data.commit.sha
+  // });
+  // console.log("===============asdaa==");
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
-    tree: [a]
+    tree: tree.data.tree
   });
 
   console.log("=1");
