@@ -18,9 +18,11 @@ const run = async () => {
     ...repoInfo,
     namespace: "heads/"
   });
+  console.log(heads);
+  console.log("++blob", blob);
 
   for (let head of heads.data) {
-    core.debug(`Test ${head.ref}`);
+    console.log(`Test ${head.ref}`);
     const headCommit = await octokit.git.getCommit({
       ...repoInfo,
       commit_sha: head.object.sha
@@ -32,12 +34,14 @@ const run = async () => {
     });
 
     console.log("+++++");
-    console.log(tree);
+    // console.log(tree);
 
     // for (let object of tree.data.tree) {
     //   core.debug(`  Test ${object.path}`);
     //   object.sha = blob.data.sha;
     // }
+
+    console.log(tree.data.tree[0]);
 
     const n = tree.data.tree.push(blob.data);
     console.log("=", n);
