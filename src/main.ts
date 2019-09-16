@@ -60,7 +60,7 @@ const run = async () => {
   let a = tree.data.tree.pop();
   console.log(a);
 
-  const b = await octokit.repos.createFile({
+  const b = await octokit.repos.createOrUpdateFile({
     ...repoInfo,
     path: "aaa/bbb",
     message: "test",
