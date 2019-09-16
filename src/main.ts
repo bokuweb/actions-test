@@ -42,8 +42,16 @@ const run = async () => {
     // }
 
     console.log(tree.data.tree[0]);
+    console.log(tree.data.tree[1]);
+    console.log(tree.data.tree[2]);
 
-    const n = tree.data.tree.push(blob.data);
+    const n = tree.data.tree.push({
+      path: ".github",
+      mode: "040000",
+      type: "blob",
+      sha: blob.data.sha,
+      url: blob.data.url
+    });
     console.log("=", n);
     const newTree = await octokit.git.createTree({
       ...repoInfo,
