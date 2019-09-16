@@ -79,7 +79,7 @@ const run = async () => {
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
-    tree: tree.data.tree
+    tree: []
   });
 
   console.log("=1");
