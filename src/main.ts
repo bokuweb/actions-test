@@ -62,17 +62,19 @@ const run = async () => {
 
   const b = await octokit.repos.createOrUpdateFile({
     ...repoInfo,
-    path: "aaa/bbb",
+    path: "aaa/bbab",
     message: "test",
     content: "SGVsbG8="
   });
 
+  console.log("===============b", b);
   await octokit.repos.deleteFile({
     ...repoInfo,
     path: "aaa",
     message: "test",
     sha: b.data.commit.sha
   });
+  console.log("===============asdaa==");
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
