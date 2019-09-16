@@ -15,14 +15,14 @@ core.debug(JSON.stringify(repoInfo));
 const run = async () => {
   const blob = await octokit.git.createBlob({ ...repoInfo, content: "Hello" });
   const heads = await octokit.git.listRefs({
-    ...repoInfo,
-    namespace: "heads/"
+    ...repoInfo
   });
   console.log(heads);
   console.log("++blob", blob);
 
   let head = heads.data[0];
-  console.log(`Test ${head.ref}`);
+  console.log(head);
+
   const headCommit = await octokit.git.getCommit({
     ...repoInfo,
     commit_sha: head.object.sha
@@ -40,13 +40,13 @@ const run = async () => {
   // console.log(tree);
 
   for (let object of tree.data.tree) {
-    console.log(`  Test ${object.path}`);
+    // console.log(`  Test ${object.path}`);
     // object.sha = blob.data.sha;
   }
 
-  console.log(tree.data.tree[0]);
-  console.log(tree.data.tree[1]);
-  console.log(tree.data.tree[2]);
+  //   console.log(tree.data.tree[0]);
+  //   console.log(tree.data.tree[1]);
+  //   console.log(tree.data.tree[2]);
 
   // const n = tree.data.tree.push({
   //   path: ".github",
@@ -77,9 +77,17 @@ const run = async () => {
   // });
   // console.log("===============asdaa==");
 
+  tree.data.tree.pop();
+  tree.data.tree.push({
+    path: "aaaaaaasad",
+    mode: "100644",
+    type: "blob",
+    sha: blob.data.sha
+  });
+
   const newTree = await octokit.git.createTree({
     ...repoInfo,
-    tree: []
+    tree: tree.data.tree
   });
 
   console.log("=1");
@@ -89,11 +97,20 @@ const run = async () => {
     message: "Test",
     parents: [headCommit.data.sha]
   });
+  console.log("newCommit", newCommit, head.ref);
+  console.log(head.ref);
+
+  // const aaa = await octokit.git.getRef({
+  //   ...repoInfo,
+  //   ref: head.data.sha
+  // });
+
   await octokit.git.updateRef({
     ...repoInfo,
-    ref: head.ref,
+    ref: head.ref.replace("refs/", ""),
     sha: newCommit.data.sha
   });
+  console.log("done");
 };
 
 run();
