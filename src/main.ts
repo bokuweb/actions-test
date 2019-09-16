@@ -4,6 +4,8 @@ const reg = require("reg-cli");
 
 const myToken = core.getInput("secret");
 
+core.info(myToken);
+
 const octokit = new github.GitHub(myToken);
 
 const repoInfo = github.context.repo;

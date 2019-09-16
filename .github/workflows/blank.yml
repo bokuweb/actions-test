@@ -13,3 +13,5 @@ jobs:
       - uses: bokuweb/actions-test@master
         with: # Set the secret as an input
           secret: ${{ secrets.WR_TOKEN }}
+        env: # Set the secret as an input
+          secret: ${{ secrets.WR_TOKEN }}
