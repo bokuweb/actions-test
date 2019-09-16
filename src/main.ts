@@ -4,7 +4,7 @@ const reg = require("reg-cli");
 
 const myToken = core.getInput("secret");
 
-core.info(myToken);
+core.debug(myToken);
 
 const octokit = new github.GitHub(myToken);
 
@@ -32,7 +32,7 @@ const run = async () => {
     });
 
     console.log(tree);
-    core.info(tree);
+    core.debug(tree);
     for (let object of tree.data.tree) {
       core.debug(`  Test ${object.path}`);
       object.sha = blob.data.sha;
