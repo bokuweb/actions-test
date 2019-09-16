@@ -60,12 +60,19 @@ const run = async () => {
   let a = tree.data.tree.pop();
   console.log(a);
 
-  // await octokit.repos.createFile({
-  //   ...repoInfo,
-  //   path: "aaa/bbb",
-  //   message: "test",
-  //   content: "SGVsbG8="
-  // });
+  const b = await octokit.repos.createFile({
+    ...repoInfo,
+    path: "aaa/bbb",
+    message: "test",
+    content: "SGVsbG8="
+  });
+
+  await octokit.repos.deleteFile({
+    ...repoInfo,
+    path: "aaa",
+    message: "test",
+    sha: b.data.commit.sha
+  });
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
