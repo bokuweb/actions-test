@@ -59,7 +59,7 @@ const run = async () => {
 
   const newTree = await octokit.git.createTree({
     ...repoInfo,
-    tree: tree.data.tree
+    tree: [a]
   });
   console.log("=1");
   const newCommit = await octokit.git.createCommit({
