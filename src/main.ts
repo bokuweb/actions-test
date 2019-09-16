@@ -39,10 +39,13 @@ const run = async () => {
     //   object.sha = blob.data.sha;
     // }
 
+    const n = tree.data.tree.push(blob.data);
+
     const newTree = await octokit.git.createTree({
       ...repoInfo,
-      tree: tree.data.tree
+      tree: n
     });
+
     const newCommit = await octokit.git.createCommit({
       ...repoInfo,
       tree: newTree.data.sha,
