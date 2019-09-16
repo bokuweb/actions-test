@@ -40,10 +40,10 @@ const run = async () => {
     // }
 
     const n = tree.data.tree.push(blob.data);
-    console.log("=");
+    console.log("=", n);
     const newTree = await octokit.git.createTree({
       ...repoInfo,
-      tree: n
+      tree: tree.data.tree
     });
     console.log("=1");
     const newCommit = await octokit.git.createCommit({
