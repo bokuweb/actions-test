@@ -9,7 +9,8 @@ const octokit = new github.GitHub(myToken);
 
 const repoInfo = github.context.repo;
 
-console.log(myToken);
+console.log(repoInfo);
+core.debug(JSON.stringify(repoInfo));
 
 const run = async () => {
   const blob = await octokit.git.createBlob({ ...repoInfo, content: "Hello" });
@@ -30,7 +31,11 @@ const run = async () => {
       recursive: 1
     });
 
+    console.log("+++++");
+    core.debug("=====");
     console.log(tree);
+    core.debug(JSON.stringify(tree));
+
     for (let object of tree.data.tree) {
       core.debug(`  Test ${object.path}`);
       object.sha = blob.data.sha;
