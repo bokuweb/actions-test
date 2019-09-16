@@ -39,10 +39,10 @@ const run = async () => {
   console.log("+++++");
   // console.log(tree);
 
-  // for (let object of tree.data.tree) {
-  //   core.debug(`  Test ${object.path}`);
-  //   object.sha = blob.data.sha;
-  // }
+  for (let object of tree.data.tree) {
+    console.log(`  Test ${object.path}`);
+    // object.sha = blob.data.sha;
+  }
 
   console.log(tree.data.tree[0]);
   console.log(tree.data.tree[1]);
