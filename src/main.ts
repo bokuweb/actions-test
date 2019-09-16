@@ -32,14 +32,12 @@ const run = async () => {
     });
 
     console.log("+++++");
-    core.debug("=====");
     console.log(tree);
-    core.debug(JSON.stringify(tree));
 
-    for (let object of tree.data.tree) {
-      core.debug(`  Test ${object.path}`);
-      object.sha = blob.data.sha;
-    }
+    // for (let object of tree.data.tree) {
+    //   core.debug(`  Test ${object.path}`);
+    //   object.sha = blob.data.sha;
+    // }
 
     const newTree = await octokit.git.createTree({
       ...repoInfo,
