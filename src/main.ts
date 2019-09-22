@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
 import * as path from "path";
+import mkdir from "make-dir";
 import axios from "axios";
 
 const token = core.getInput("secret");
@@ -61,9 +62,9 @@ const run = async () => {
         url: file.download_url,
         responseType: "stream"
       }).then(response => {
-        response.data.pipe(
-          fs.createWriteStream(path.join("/expected", file.path))
-        );
+        const p = path.join("/expected", file.path);
+        mkdir.sync(p);
+        response.data.pipe(fs.createWriteStream(p));
       });
     })
   );
