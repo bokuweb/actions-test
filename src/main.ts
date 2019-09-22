@@ -28,13 +28,23 @@ const run = async () => {
 
   const branches = await octokit.repos.listBranches(repoInfo);
 
-  console.log(branches);
+  console.log("branches", branches.data);
+
+  const contents = await octokit.repos.getContents({
+    ...repoInfo,
+    path: "test",
+    ref: "gh-pages"
+  });
+
+  console.log("contents", contents);
 
   let head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
     ...repoInfo,
     commit_sha: head.object.sha
   });
+
+  console.log("head", head);
 
   const branch = await octokit.repos
     .getBranch({
@@ -46,6 +56,8 @@ const run = async () => {
       return null;
     });
 
+  console.log("branch", branch);
+  /*
   const ref = branch
     ? branch.data.name
     : (await octokit.git.createRef({
@@ -99,6 +111,7 @@ const run = async () => {
     ref: ref.replace("refs/", ""),
     sha: newCommit.data.sha
   });
+  */
   console.log("done");
 };
 
