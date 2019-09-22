@@ -1,0 +1,9 @@
+name: "Test"
+description: "Action Tests"
+author: "bokuweb"
+inputs:
+  myToken:
+    description: "A token with access to your repository scoped in as a secret."
+runs:
+  using: "node12"
+  main: "lib/main.js"
