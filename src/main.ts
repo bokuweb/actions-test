@@ -1,6 +1,8 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
+import * as path from "path";
+import axios from "axios";
 
 const token = core.getInput("secret");
 
@@ -38,6 +40,34 @@ const run = async () => {
 
   console.log("contents", contents);
 
+  /*
+      {
+      name: 'open .png',
+      path: 'test/open .png',
+      sha: '62aeef103df7a3206992a9c9e742af414c7146e6',
+      size: 300852,
+      url: 'https://api.github.com/repos/bokuweb/actions-test/contents/test/open%20.png?ref=gh-pages',
+      html_url: 'https://github.com/bokuweb/actions-test/blob/gh-pages/test/open%20.png',
+      git_url: 'https://api.github.com/repos/bokuweb/actions-test/git/blobs/62aeef103df7a3206992a9c9e742af414c7146e6',
+      download_url: 'https://raw.githubusercontent.com/bokuweb/actions-test/gh-pages/test/open%20.png',
+      type: 'file',
+      _links: [Object]
+    }
+    */
+  await Promise.all(
+    (contents.data || []).map(file => {
+      return axios({
+        method: "get",
+        url: file.download_url,
+        responseType: "stream"
+      }).then(response => {
+        response.data.pipe(
+          fs.createWriteStream(path.join("/expected", file.path))
+        );
+      });
+    })
+  );
+
   let head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
     ...repoInfo,
@@ -46,17 +76,19 @@ const run = async () => {
 
   console.log("head", head);
 
-  const branch = await octokit.repos
-    .getBranch({
-      ...repoInfo,
-      branch: "gh-pages"
-    })
-    .catch(e => {
-      console.log(e);
-      return null;
-    });
+  //
+  // Get branch if not exist create one.
+  // const branch = await octokit.repos
+  //   .getBranch({
+  //     ...repoInfo,
+  //     branch: "gh-pages"
+  //   })
+  //   .catch(e => {
+  //     console.log(e);
+  //     return null;
+  //   });
 
-  console.log("branch", branch);
+  // console.log("branch", branch);
   /*
   const ref = branch
     ? branch.data.name
