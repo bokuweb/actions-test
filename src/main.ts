@@ -68,6 +68,9 @@ const run = async () => {
     })
   );
 
+  console.log(fs.readFileSync(path.join("/expected", "open .png", "utf-8")));
+  console.log("download complete");
+
   let head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
     ...repoInfo,
