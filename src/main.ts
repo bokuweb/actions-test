@@ -49,6 +49,18 @@ const run = async () => {
     });
   }
 
+  let branch = await octokit.repos
+    .getBranch({ ...repo, branch: BRANCH_NAME })
+    .catch(e => {
+      throw new Error("Failed to fetch branch.");
+    });
+
+  let tree = await octokit.git.getTree({
+    ...repo,
+    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
+    recursive: 1
+  });
+
   const publish = async () => {
     await Promise.all(
       glob.sync("./report/**/*.*").map(async p => {
@@ -163,11 +175,6 @@ const run = async () => {
 
   //
   // Get branch if not exist create one.
-  let branch = await octokit.repos
-    .getBranch({ ...repo, branch: BRANCH_NAME })
-    .catch(e => {
-      throw new Error("Failed to fetch branch.");
-    });
 
   console.log("branch", branch);
 
@@ -192,12 +199,6 @@ const run = async () => {
 
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
-
-  let tree = await octokit.git.getTree({
-    ...repo,
-    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
-    recursive: 1
-  });
 
   // const timestamp = ~~(new Date().getTime() / 10000);
 
