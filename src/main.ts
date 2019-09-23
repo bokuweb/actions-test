@@ -32,12 +32,6 @@ if (!event) {
 }
 
 const run = async () => {
-  const targetHash = execSync(
-    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
-    { encoding: "utf8" }
-  ).slice(0, 7);
-  console.log(targetHash);
-
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
@@ -53,6 +47,50 @@ const run = async () => {
       ref: `refs/heads/${BRANCH_NAME}`,
       sha: headCommit.data.sha
     });
+  }
+
+  const publish = async () => {
+    await Promise.all(
+      glob.sync("./report/**/*.*").map(async p => {
+        console.log(p);
+        const file = fs.readFileSync(p);
+        const content = Buffer.from(file).toString("base64");
+        const blob = await octokit.git.createBlob({
+          ...repo,
+          content,
+          encoding: "base64"
+        });
+        tree.data.tree.push({
+          path: path
+            .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
+            .replace(/^\.\//, ""),
+          mode: "100644",
+          type: "blob",
+          sha: blob.data.sha
+        });
+      })
+    );
+
+    const timestamp = `${~~(new Date().getTime() * 1000)}`;
+    const stamp = await octokit.git.createBlob({
+      ...repo,
+      content: `${~~(new Date().getTime() / 1000)}`
+    });
+    tree.data.tree.push({
+      path: path
+        .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+        .replace(/^\.\//, ""),
+      mode: "100644",
+      sha: stamp.data.sha
+    });
+  };
+
+  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+
+  // Not PR
+  if (typeof event.number === "undefined") {
+    await publish();
+    return;
   }
 
   const contents = await octokit.repos
@@ -81,6 +119,13 @@ const run = async () => {
       _links: [Object]
     }
     */
+
+  const targetHash = execSync(
+    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+    { encoding: "utf8" }
+  ).slice(0, 7);
+  console.log(targetHash);
+
   await Promise.all(
     (contents.data || [])
       .filter(file => {
@@ -129,7 +174,7 @@ const run = async () => {
   const ref = branch.data.name;
   console.log(ref);
 
-  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+  // cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
   const emitter = compare({
     actualDir: "./report/actual",
     expectedDir: "./report/expected",
@@ -154,40 +199,21 @@ const run = async () => {
     recursive: 1
   });
 
-  const timestamp = ~~(new Date().getTime() / 10000);
+  // const timestamp = ~~(new Date().getTime() / 10000);
 
-  await Promise.all(
-    glob.sync("./report/**/*.*").map(async p => {
-      console.log(p);
-      const file = fs.readFileSync(p);
-      const content = Buffer.from(file).toString("base64");
-      const blob = await octokit.git.createBlob({
-        ...repo,
-        content,
-        encoding: "base64"
-      });
-      tree.data.tree.push({
-        path: path
-          .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
-          .replace(/^\.\//, ""),
-        mode: "100644",
-        type: "blob",
-        sha: blob.data.sha
-      });
-    })
-  );
+  await publish();
 
-  const stamp = await octokit.git.createBlob({
-    ...repo,
-    content: `${~~(new Date().getTime() / 1000)}`
-  });
-  tree.data.tree.push({
-    path: path
-      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
-      .replace(/^\.\//, ""),
-    mode: "100644",
-    sha: stamp.data.sha
-  });
+  // const stamp = await octokit.git.createBlob({
+  //   ...repo,
+  //   content: `${~~(new Date().getTime() / 1000)}`
+  // });
+  // tree.data.tree.push({
+  //   path: path
+  //     .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+  //     .replace(/^\.\//, ""),
+  //   mode: "100644",
+  //   sha: stamp.data.sha
+  // });
 
   const newTree = await octokit.git.createTree({
     ...repo,
@@ -211,6 +237,6 @@ const run = async () => {
   console.log("done");
 };
 
-if (typeof event.number !== "undefined" && event.pull_request) {
-  run();
-}
+// if (typeof event.number !== "undefined" && event.pull_request) {
+run();
+// }
