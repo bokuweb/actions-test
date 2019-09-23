@@ -161,6 +161,7 @@ const run = async () => {
   //   sha: blob.data.sha
   // });
 
+  /*
   const newTree = await octokit.git.createTree({
     ...repoInfo,
     tree: [
@@ -186,7 +187,7 @@ const run = async () => {
     ref: `heads/${ref}`,
     sha: newCommit.data.sha
   });
-
+*/
   console.log("done");
 };
 
