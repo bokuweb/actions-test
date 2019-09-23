@@ -30,7 +30,7 @@ console.log(event);
 const targetHash = execSync(
   `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
   { encoding: "utf8" }
-).slice(0, 8);
+).slice(0, 7);
 console.log(targetHash);
 
 if (!event) {
@@ -176,7 +176,7 @@ const run = async () => {
       });
       tree.data.tree.push({
         path: path
-          .join(`reg${event.after.slice(0, 8)}`, p)
+          .join(`reg${event.after.slice(0, 7)}`, `${timestamp}`, p)
           .replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
