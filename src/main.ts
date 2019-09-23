@@ -5,6 +5,8 @@ import * as path from "path";
 import mkdir from "make-dir";
 import axios from "axios";
 
+const compare = require("reg-cli");
+
 const token = core.getInput("secret");
 
 const octokit = new github.GitHub(token);
@@ -67,7 +69,7 @@ const run = async () => {
         // responseType: "stream"
         responseType: "arraybuffer"
       }).then(response => {
-        const p = path.join("./expected", file.path);
+        const p = path.join("./report/expected", file.path);
         mkdir.sync(path.dirname(p));
         // let blob = new Blob([response.data], { type: "image/png" });
         fs.writeFileSync(p, Buffer.from(response.data, "binary"));
@@ -91,7 +93,7 @@ const run = async () => {
 
   //
   // Get branch if not exist create one.
-  const branch = await octokit.repos
+  let branch = await octokit.repos
     .getBranch({
       ...repoInfo,
       branch: "gh-pages"
@@ -115,8 +117,22 @@ const run = async () => {
 
   console.log(ref);
 
+  const emitter = compare({
+    actualDir: "./actual",
+    expectedDir: "./report/expected",
+    diffDir: "./report/diff",
+    json: "./report/reg.json",
+    report: "./report/index.html",
+    update: false,
+    ignoreChange: true,
+    urlPrefix: ""
+  });
+  emitter.on("compare", (compareItem: { type: string; path: string }) => {
+    console.log(compareItem);
+  });
+
+  /*
   const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
-  // convert binary data to base64 encoded string
   const content = Buffer.from(image).toString("base64");
 
   console.log(content);
@@ -146,7 +162,7 @@ const run = async () => {
     tree: [
       ...tree.data.tree,
       {
-        path: "im",
+        path: "image.png",
         mode: "100644",
         type: "blob",
         sha: blob.data.sha
@@ -168,6 +184,7 @@ const run = async () => {
   });
 
   console.log("done");
+  */
 };
 
 // if (typeof event.number !== "undefined" && event.pull_request) {

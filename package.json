@@ -27,7 +27,7 @@
     "@actions/tool-cache": "^1.0.0",
     "axios": "^0.19.0",
     "make-dir": "^3.0.0",
-    "reg-cli": "^0.14.1",
+    "reg-cli": "^0.15.7",
     "semver": "^6.1.1"
   },
   "devDependencies": {
