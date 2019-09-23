@@ -193,7 +193,7 @@ const run = async () => {
   const newCommit = await octokit.git.createCommit({
     ...repo,
     tree: newTree.data.sha,
-    message: "Commit By reg",
+    message: "Commit By reg!",
     parents: [branch.data.commit.sha]
   });
 
