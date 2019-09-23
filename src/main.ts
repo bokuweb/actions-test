@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
 import * as path from "path";
+import glob from "glob";
 import mkdir from "make-dir";
 import axios from "axios";
 
@@ -131,22 +132,25 @@ const run = async () => {
     console.log(compareItem);
   });
 
-  /*
-  const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
-  const content = Buffer.from(image).toString("base64");
+  // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
+  // const content = Buffer.from(image).toString("base64");
 
-  console.log(content);
+  // console.log(content);
 
-  const blob = await octokit.git.createBlob({
-    ...repoInfo,
-    content,
-    encoding: "base64"
-  });
+  // const blob = await octokit.git.createBlob({
+  //   ...repoInfo,
+  //   content,
+  //   encoding: "base64"
+  // });
 
   let tree = await octokit.git.getTree({
     ...repoInfo,
     tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
     recursive: 1
+  });
+
+  glob.sync("/report/*").forEach(f => {
+    console.log(f);
   });
 
   // tree.data.tree.pop();
@@ -184,7 +188,6 @@ const run = async () => {
   });
 
   console.log("done");
-  */
 };
 
 // if (typeof event.number !== "undefined" && event.pull_request) {
