@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import glob from "glob";
 import mkdir from "make-dir";
+import cpx from "cpx";
 import axios from "axios";
 
 const compare = require("reg-cli");
@@ -118,8 +119,9 @@ const run = async () => {
 
   console.log(ref);
 
+  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
   const emitter = compare({
-    actualDir: "./actual",
+    actualDir: "./report/actual",
     expectedDir: "./report/expected",
     diffDir: "./report/diff",
     json: "./report/reg.json",
@@ -149,7 +151,7 @@ const run = async () => {
     recursive: 1
   });
 
-  glob.sync("/report/*").forEach(f => {
+  glob.sync("./report/**/*.*").forEach(f => {
     console.log(f);
   });
 
