@@ -27,17 +27,17 @@ try {
 
 console.log(event);
 
-const targetHash = execSync(
-  `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
-  { encoding: "utf8" }
-).slice(0, 7);
-console.log(targetHash);
-
 if (!event) {
   throw new Error("Failed to get github event.json..");
 }
 
 const run = async () => {
+  const targetHash = execSync(
+    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+    { encoding: "utf8" }
+  ).slice(0, 7);
+  console.log(targetHash);
+
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
