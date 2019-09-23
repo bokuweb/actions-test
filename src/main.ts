@@ -29,7 +29,7 @@ console.log("base", event.pull_request.base, event.pull_request.head);
 
 console.log(
   execSync(
-    `git merge-base refs/heafs/${event.pull_request.base.ref} refs/heads/${event.pull_request.head.ref}`
+    `git merge-base refs/heads/${event.pull_request.base.ref} refs/heads/${event.pull_request.head.ref}`
   )
 );
 
