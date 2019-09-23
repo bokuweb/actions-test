@@ -148,21 +148,13 @@ const run = async () => {
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
 
-  // console.log(content);
-
-  // const blob = await octokit.git.createBlob({
-  //   ...repo,
-  //   content,
-  //   encoding: "base64"
-  // });
-
   let tree = await octokit.git.getTree({
     ...repo,
     tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
     recursive: 1
   });
 
-  const timestamp = new Date().getTime();
+  const timestamp = ~~(new Date().getTime() / 10000);
 
   await Promise.all(
     glob.sync("./report/**/*.*").map(async p => {
