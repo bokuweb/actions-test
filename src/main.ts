@@ -49,11 +49,13 @@ const run = async () => {
     });
   }
 
-  let branch = await octokit.repos
+  const branch = await octokit.repos
     .getBranch({ ...repo, branch: BRANCH_NAME })
     .catch(e => {
       throw new Error("Failed to fetch branch.");
     });
+
+  const ref = branch.data.name;
 
   let tree = await octokit.git.getTree({
     ...repo,
@@ -108,8 +110,6 @@ const run = async () => {
       message: "Commit By reg!",
       parents: [branch.data.commit.sha]
     });
-
-    console.log("ref", ref);
 
     await octokit.git.updateRef({
       ...repo,
@@ -199,7 +199,6 @@ const run = async () => {
 
   console.log("branch", branch);
 
-  const ref = branch.data.name;
   console.log(ref);
 
   // cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
