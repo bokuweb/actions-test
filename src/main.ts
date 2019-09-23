@@ -162,6 +162,8 @@ const run = async () => {
     recursive: 1
   });
 
+  const timestamp = new Date().getTime();
+
   await Promise.all(
     glob.sync("./report/**/*.*").map(async p => {
       console.log(p);
@@ -173,9 +175,7 @@ const run = async () => {
         encoding: "base64"
       });
       tree.data.tree.push({
-        path: path
-          .join(`${event.after}-${new Date().getTime()}`, p)
-          .replace(/^\.\//, ""),
+        path: path.join(`${event.after}-${timestamp}`, p).replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
         sha: blob.data.sha
