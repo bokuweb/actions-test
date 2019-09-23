@@ -177,12 +177,16 @@ const run = async () => {
     })
   );
 
+  const stamp = await octokit.git.createBlob({
+    ...repo,
+    content: `${~~(new Date().getTime() / 1000)}`
+  });
   tree.data.tree.push({
     path: path
       .join(`reg${event.after.slice(0, 7)}`, `${timestamp}`)
       .replace(/^\.\//, ""),
     mode: "100644",
-    sha: `${timestamp}`
+    sha: stamp.data.sha
   });
 
   const newTree = await octokit.git.createTree({
