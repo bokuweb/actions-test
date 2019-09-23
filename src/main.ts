@@ -25,16 +25,14 @@ try {
   }
 } catch (e) {}
 
-console.log("base", event.pull_request.base, event.pull_request.head);
-
 console.log(
   execSync(
-    `git merge-base refs/heads/${event.pull_request.base.ref} refs/heads/${event.pull_request.head.ref}`
+    `git merge-base -a ${event.pull_request.base.ref} ${event.pull_request.head.ref}`
   )
 );
 
 if (!event) {
-  throw new Error("Failed to get github event.json.");
+  throw new Error("Failed to get github event.json");
 }
 
 const run = async () => {
