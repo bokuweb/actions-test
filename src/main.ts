@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
+import { execSync } from "child_process";
 import * as path from "path";
 import glob from "glob";
 import mkdir from "make-dir";
@@ -13,7 +14,9 @@ const token = core.getInput("secret");
 
 const octokit = new github.GitHub(token);
 
-const repoInfo = github.context.repo;
+const { repo } = github.context;
+
+const BRANCH_NAME = "gh-pages";
 
 let event;
 try {
@@ -22,26 +25,41 @@ try {
   }
 } catch (e) {}
 
-console.log(event);
+console.log("base", event.pull_request.base, event.pull_request.head);
+
+console.log(
+  execSync(
+    `git merge-base ${event.pull_request.base.ref} ${event.pull_request.head.ref}`
+  )
+);
 
 if (!event) {
   throw new Error("Failed to get github event.json");
 }
 
 const run = async () => {
-  const heads = await octokit.git.listRefs({
-    ...repoInfo
+  const heads = await octokit.git.listRefs(repo);
+  const head = heads.data[0];
+  const headCommit = await octokit.git.getCommit({
+    ...repo,
+    commit_sha: head.object.sha
   });
+  const branches = await octokit.repos.listBranches(repo);
+  const found = branches.data.find(b => b.name === BRANCH_NAME);
 
-  const branches = await octokit.repos.listBranches(repoInfo);
-
-  console.log("branches", branches.data);
+  if (!found) {
+    await octokit.git.createRef({
+      ...repo,
+      ref: `refs/heads/${BRANCH_NAME}`,
+      sha: headCommit.data.sha
+    });
+  }
 
   const contents = await octokit.repos
     .getContents({
-      ...repoInfo,
-      path: "test",
-      ref: "gh-pages"
+      ...repo,
+      path: "",
+      ref: BRANCH_NAME
     })
     .catch(() => {
       return { data: [] };
@@ -85,19 +103,13 @@ const run = async () => {
   //   );
   console.log("download complete");
 
-  let head = heads.data[0];
-  const headCommit = await octokit.git.getCommit({
-    ...repoInfo,
-    commit_sha: head.object.sha
-  });
-
   console.log("head", head);
 
   //
   // Get branch if not exist create one.
   let branch = await octokit.repos
     .getBranch({
-      ...repoInfo,
+      ...repo,
       branch: "gh-pages"
     })
     .catch(e => {
@@ -112,7 +124,7 @@ const run = async () => {
   const ref = branch
     ? branch.data.name
     : (await octokit.git.createRef({
-        ...repoInfo,
+        ...repo,
         ref: "refs/heads/gh-pages",
         sha: headCommit.data.sha
       })).data.ref;
@@ -141,34 +153,37 @@ const run = async () => {
   // console.log(content);
 
   // const blob = await octokit.git.createBlob({
-  //   ...repoInfo,
+  //   ...repo,
   //   content,
   //   encoding: "base64"
   // });
 
   let tree = await octokit.git.getTree({
-    ...repoInfo,
+    ...repo,
     tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
     recursive: 1
   });
 
-  glob.sync("./report/**/*.*").forEach(async p => {
-    console.log(p);
-    const file = fs.readFileSync(p);
-    const content = Buffer.from(file).toString("base64");
-    const blob = await octokit.git.createBlob({
-      ...repoInfo,
-      content,
-      encoding: "base64"
-    });
-    tree.data.tree.push({
-      path: p,
-      mode: "100644",
-      type: "blob",
-      sha: blob.data.sha
-    });
-  });
+  await Promise.all(
+    glob.sync("./report/**/*.*").map(async p => {
+      console.log(p);
+      const file = fs.readFileSync(p);
+      const content = Buffer.from(file).toString("base64");
+      const blob = await octokit.git.createBlob({
+        ...repo,
+        content,
+        encoding: "base64"
+      });
+      tree.data.tree.push({
+        path: p.replace("./", ""),
+        mode: "100644",
+        type: "blob",
+        sha: blob.data.sha
+      });
+    })
+  );
 
+  console.log("+++=sadad");
   // tree.data.tree.pop();
   // tree.data.tree.push({
   //   path: "image222",
@@ -178,7 +193,7 @@ const run = async () => {
   // });
 
   const newTree = await octokit.git.createTree({
-    ...repoInfo,
+    ...repo,
     tree: [
       ...tree.data.tree
       // {
@@ -191,20 +206,22 @@ const run = async () => {
   });
 
   const newCommit = await octokit.git.createCommit({
-    ...repoInfo,
+    ...repo,
     tree: newTree.data.sha,
     message: "Test",
     parents: [branch.data.commit.sha]
   });
 
+  console.log("ref", ref);
+
   await octokit.git.updateRef({
-    ...repoInfo,
+    ...repo,
     ref: `heads/${ref}`,
     sha: newCommit.data.sha
   });
   console.log("done");
 };
 
-// if (typeof event.number !== "undefined" && event.pull_request) {
-run();
-//}
+if (typeof event.number !== "undefined" && event.pull_request) {
+  run();
+}
