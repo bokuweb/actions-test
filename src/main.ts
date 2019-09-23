@@ -183,7 +183,7 @@ const run = async () => {
   });
   tree.data.tree.push({
     path: path
-      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}`)
+      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
       .replace(/^\.\//, ""),
     mode: "100644",
     sha: stamp.data.sha
