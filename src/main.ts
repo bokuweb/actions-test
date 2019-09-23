@@ -168,7 +168,11 @@ const run = async () => {
       });
       tree.data.tree.push({
         path: path
-          .join(`reg${event.after.slice(0, 7)}`, p)
+          .join(
+            `reg${event.after.slice(0, 7)}`,
+            `${timestamp}`,
+            p.replace("report/", "")
+          )
           .replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
