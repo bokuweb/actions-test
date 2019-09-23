@@ -130,7 +130,8 @@ const run = async () => {
     ignoreChange: true,
     urlPrefix: ""
   });
-  emitter.on("compare", (compareItem: { type: string; path: string }) => {
+
+  emitter.on("compare", async (compareItem: { type: string; path: string }) => {
     console.log(compareItem);
   });
 
@@ -151,8 +152,21 @@ const run = async () => {
     recursive: 1
   });
 
-  glob.sync("./report/**/*.*").forEach(f => {
-    console.log(f);
+  glob.sync("./report/**/*.*").forEach(async p => {
+    console.log(p);
+    const file = fs.readFileSync(p);
+    const content = Buffer.from(file).toString("base64");
+    const blob = await octokit.git.createBlob({
+      ...repoInfo,
+      content,
+      encoding: "base64"
+    });
+    tree.data.tree.push({
+      path: p,
+      mode: "100644",
+      type: "blob",
+      sha: blob.data.sha
+    });
   });
 
   // tree.data.tree.pop();
@@ -163,17 +177,16 @@ const run = async () => {
   //   sha: blob.data.sha
   // });
 
-  /*
   const newTree = await octokit.git.createTree({
     ...repoInfo,
     tree: [
-      ...tree.data.tree,
-      {
-        path: "image.png",
-        mode: "100644",
-        type: "blob",
-        sha: blob.data.sha
-      }
+      ...tree.data.tree
+      // {
+      //   path: "image.png",
+      //   mode: "100644",
+      //   type: "blob",
+      //   sha: blob.data.sha
+      // }
     ]
   });
 
@@ -189,7 +202,6 @@ const run = async () => {
     ref: `heads/${ref}`,
     sha: newCommit.data.sha
   });
-*/
   console.log("done");
 };
 
