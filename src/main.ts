@@ -168,11 +168,7 @@ const run = async () => {
       });
       tree.data.tree.push({
         path: path
-          .join(
-            `reg${event.after.slice(0, 7)}`,
-            `${timestamp}`,
-            p.replace("report/", "")
-          )
+          .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
           .replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
@@ -180,6 +176,14 @@ const run = async () => {
       });
     })
   );
+
+  tree.data.tree.push({
+    path: path
+      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}`)
+      .replace(/^\.\//, ""),
+    mode: "100644",
+    sha: `${timestamp}`
+  });
 
   const newTree = await octokit.git.createTree({
     ...repo,
