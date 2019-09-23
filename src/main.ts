@@ -211,6 +211,9 @@ const run = async () => {
   console.log("done");
 };
 
-if (typeof event.number !== "undefined" && event.pull_request) {
+if (
+  (typeof event.number !== "undefined" && event.pull_request) ||
+  event.merged
+) {
   run();
 }
