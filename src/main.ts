@@ -25,14 +25,16 @@ try {
   }
 } catch (e) {}
 
-console.log(
-  execSync(
-    `git merge-base -a ${event.pull_request.base.ref} ${event.pull_request.head.ref}`
-  )
-);
+console.log(event);
+
+const targetHash = execSync(
+  `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+  { encoding: "utf8" }
+).slice(0, 7);
+console.log(targetHash);
 
 if (!event) {
-  throw new Error("Failed to get github event.json");
+  throw new Error("Failed to get github event.json..");
 }
 
 const run = async () => {
@@ -80,20 +82,31 @@ const run = async () => {
     }
     */
   await Promise.all(
-    (contents.data || []).map(file => {
-      return axios({
-        method: "get",
-        url: file.download_url,
-        // responseType: "stream"
-        responseType: "arraybuffer"
-      }).then(response => {
-        const p = path.join("./report/expected", file.path);
-        mkdir.sync(path.dirname(p));
-        // let blob = new Blob([response.data], { type: "image/png" });
-        fs.writeFileSync(p, Buffer.from(response.data, "binary"));
-        //response.data.pipe(fs.createWriteStream(p));
-      });
-    })
+    (contents.data || [])
+      .filter(file => {
+        console.log(file.path);
+        return (
+          !!file.download_url &&
+          [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
+            path.extname(file.download_url)
+          ) &&
+          file.path.includes(targetHash)
+        );
+      })
+      .map(file => {
+        return axios({
+          method: "get",
+          url: file.download_url,
+          // responseType: "stream"
+          responseType: "arraybuffer"
+        }).then(response => {
+          const p = path.join("./report/expected", file.path);
+          mkdir.sync(path.dirname(p));
+          // let blob = new Blob([response.data], { type: "image/png" });
+          fs.writeFileSync(p, Buffer.from(response.data, "binary"));
+          //response.data.pipe(fs.createWriteStream(p));
+        });
+      })
   );
 
   //   console.log(
@@ -106,27 +119,14 @@ const run = async () => {
   //
   // Get branch if not exist create one.
   let branch = await octokit.repos
-    .getBranch({
-      ...repo,
-      branch: "gh-pages"
-    })
+    .getBranch({ ...repo, branch: BRANCH_NAME })
     .catch(e => {
-      console.log(e);
-      return null;
+      throw new Error("Failed to fetch branch.");
     });
-
-  if (!branch) return;
 
   console.log("branch", branch);
 
-  const ref = branch
-    ? branch.data.name
-    : (await octokit.git.createRef({
-        ...repo,
-        ref: "refs/heads/gh-pages",
-        sha: headCommit.data.sha
-      })).data.ref;
-
+  const ref = branch.data.name;
   console.log(ref);
 
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
@@ -148,19 +148,13 @@ const run = async () => {
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
 
-  // console.log(content);
-
-  // const blob = await octokit.git.createBlob({
-  //   ...repo,
-  //   content,
-  //   encoding: "base64"
-  // });
-
   let tree = await octokit.git.getTree({
     ...repo,
     tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
     recursive: 1
   });
+
+  const timestamp = ~~(new Date().getTime() / 10000);
 
   await Promise.all(
     glob.sync("./report/**/*.*").map(async p => {
@@ -173,7 +167,9 @@ const run = async () => {
         encoding: "base64"
       });
       tree.data.tree.push({
-        path: p.replace("./", ""),
+        path: path
+          .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
+          .replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
         sha: blob.data.sha
@@ -181,32 +177,27 @@ const run = async () => {
     })
   );
 
-  console.log("+++=sadad");
-  // tree.data.tree.pop();
-  // tree.data.tree.push({
-  //   path: "image222",
-  //   mode: "100644",
-  //   type: "blob",
-  //   sha: blob.data.sha
-  // });
+  const stamp = await octokit.git.createBlob({
+    ...repo,
+    content: `${~~(new Date().getTime() / 1000)}`
+  });
+  tree.data.tree.push({
+    path: path
+      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+      .replace(/^\.\//, ""),
+    mode: "100644",
+    sha: stamp.data.sha
+  });
 
   const newTree = await octokit.git.createTree({
     ...repo,
-    tree: [
-      ...tree.data.tree
-      // {
-      //   path: "image.png",
-      //   mode: "100644",
-      //   type: "blob",
-      //   sha: blob.data.sha
-      // }
-    ]
+    tree: tree.data.tree
   });
 
   const newCommit = await octokit.git.createCommit({
     ...repo,
     tree: newTree.data.sha,
-    message: "Test",
+    message: "Commit By reg!",
     parents: [branch.data.commit.sha]
   });
 
