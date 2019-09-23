@@ -88,12 +88,33 @@ const run = async () => {
       ...repo,
       content: `${~~(new Date().getTime() / 1000)}`
     });
+
     tree.data.tree.push({
       path: path
         .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
         .replace(/^\.\//, ""),
       mode: "100644",
       sha: stamp.data.sha
+    });
+
+    const newTree = await octokit.git.createTree({
+      ...repo,
+      tree: tree.data.tree
+    });
+
+    const newCommit = await octokit.git.createCommit({
+      ...repo,
+      tree: newTree.data.sha,
+      message: "Commit By reg!",
+      parents: [branch.data.commit.sha]
+    });
+
+    console.log("ref", ref);
+
+    await octokit.git.updateRef({
+      ...repo,
+      ref: `heads/${ref}`,
+      sha: newCommit.data.sha
     });
   };
 
@@ -216,25 +237,25 @@ const run = async () => {
   //   sha: stamp.data.sha
   // });
 
-  const newTree = await octokit.git.createTree({
-    ...repo,
-    tree: tree.data.tree
-  });
-
-  const newCommit = await octokit.git.createCommit({
-    ...repo,
-    tree: newTree.data.sha,
-    message: "Commit By reg!",
-    parents: [branch.data.commit.sha]
-  });
-
-  console.log("ref", ref);
-
-  await octokit.git.updateRef({
-    ...repo,
-    ref: `heads/${ref}`,
-    sha: newCommit.data.sha
-  });
+  //   const newTree = await octokit.git.createTree({
+  //     ...repo,
+  //     tree: tree.data.tree
+  //   });
+  //
+  //   const newCommit = await octokit.git.createCommit({
+  //     ...repo,
+  //     tree: newTree.data.sha,
+  //     message: "Commit By reg!",
+  //     parents: [branch.data.commit.sha]
+  //   });
+  //
+  //   console.log("ref", ref);
+  //
+  //   await octokit.git.updateRef({
+  //     ...repo,
+  //     ref: `heads/${ref}`,
+  //     sha: newCommit.data.sha
+  //   });
   console.log("done");
 };
 
