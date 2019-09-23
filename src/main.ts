@@ -119,27 +119,14 @@ const run = async () => {
   //
   // Get branch if not exist create one.
   let branch = await octokit.repos
-    .getBranch({
-      ...repo,
-      branch: "gh-pages"
-    })
+    .getBranch({ ...repo, branch: BRANCH_NAME })
     .catch(e => {
-      console.log(e);
-      return null;
+      throw new Error("Failed to fetch branch.");
     });
-
-  if (!branch) return;
 
   console.log("branch", branch);
 
-  const ref = branch
-    ? branch.data.name
-    : (await octokit.git.createRef({
-        ...repo,
-        ref: "refs/heads/gh-pages",
-        sha: headCommit.data.sha
-      })).data.ref;
-
+  const ref = branch.data.name;
   console.log(ref);
 
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
@@ -186,7 +173,9 @@ const run = async () => {
         encoding: "base64"
       });
       tree.data.tree.push({
-        path: p.replace("./", ""),
+        path: path
+          .join(`${event.after}-${new Date().getTime()}`, p)
+          .replace(/^\.\//, ""),
         mode: "100644",
         type: "blob",
         sha: blob.data.sha
@@ -194,32 +183,15 @@ const run = async () => {
     })
   );
 
-  console.log("+++=sadad");
-  // tree.data.tree.pop();
-  // tree.data.tree.push({
-  //   path: "image222",
-  //   mode: "100644",
-  //   type: "blob",
-  //   sha: blob.data.sha
-  // });
-
   const newTree = await octokit.git.createTree({
     ...repo,
-    tree: [
-      ...tree.data.tree
-      // {
-      //   path: "image.png",
-      //   mode: "100644",
-      //   type: "blob",
-      //   sha: blob.data.sha
-      // }
-    ]
+    tree: tree.data.tree
   });
 
   const newCommit = await octokit.git.createCommit({
     ...repo,
     tree: newTree.data.sha,
-    message: "Test",
+    message: "Commit By reg",
     parents: [branch.data.commit.sha]
   });
 
