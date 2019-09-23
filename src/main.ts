@@ -27,11 +27,11 @@ try {
 
 console.log(event);
 
-console.log(
-  execSync(
-    `git merge-base -a refs/heads/${event.pull_request.base.ref} refs/heads/${event.pull_request.head.ref}`
-  )
+const targetHash = execSync(
+  `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+  { encoding: "utf8" }
 );
+console.log(targetHash);
 
 if (!event) {
   throw new Error("Failed to get github event.json..");
@@ -82,20 +82,31 @@ const run = async () => {
     }
     */
   await Promise.all(
-    (contents.data || []).map(file => {
-      return axios({
-        method: "get",
-        url: file.download_url,
-        // responseType: "stream"
-        responseType: "arraybuffer"
-      }).then(response => {
-        const p = path.join("./report/expected", file.path);
-        mkdir.sync(path.dirname(p));
-        // let blob = new Blob([response.data], { type: "image/png" });
-        fs.writeFileSync(p, Buffer.from(response.data, "binary"));
-        //response.data.pipe(fs.createWriteStream(p));
-      });
-    })
+    (contents.data || [])
+      .filter(file => {
+        console.log(file.path);
+        return (
+          !!file.download_url &&
+          [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
+            path.extname(file.download_url)
+          ) &&
+          file.path.includes(targetHash)
+        );
+      })
+      .map(file => {
+        return axios({
+          method: "get",
+          url: file.download_url,
+          // responseType: "stream"
+          responseType: "arraybuffer"
+        }).then(response => {
+          const p = path.join("./report/expected", file.path);
+          mkdir.sync(path.dirname(p));
+          // let blob = new Blob([response.data], { type: "image/png" });
+          fs.writeFileSync(p, Buffer.from(response.data, "binary"));
+          //response.data.pipe(fs.createWriteStream(p));
+        });
+      })
   );
 
   //   console.log(
