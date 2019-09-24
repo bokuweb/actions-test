@@ -143,7 +143,9 @@ const run = async () => {
     "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++"
   );
   console.log(targetHash);
-  console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+  console.log(
+    "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  );
 
   const contents = await octokit.repos
     .getContents({
