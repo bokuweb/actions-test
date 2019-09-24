@@ -83,7 +83,7 @@ const run = async () => {
 
         tree.data.tree.push({
           path: path
-            .join(`reg${sha(0, 7)}`, p.replace("report/", ""))
+            .join(`reg${sha.slice(0, 7)}`, p.replace("report/", ""))
             .replace(/^\.\//, ""),
           mode: "100644",
           type: "blob",
