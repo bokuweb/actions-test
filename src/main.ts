@@ -134,17 +134,30 @@ const run = async () => {
     return;
   }
 
-  const targetHash = execSync(
-    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
-    { encoding: "utf8" }
-  ).slice(0, 7);
+  let targetHash = "";
+  try {
+    targetHash = execSync(
+      `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+      { encoding: "utf8" }
+    ).slice(0, 7);
+  } catch (e) {
+    targetHash = execSync(
+      `git merge-base -a origin/${event.pull_request.base.ref} pull/${event.number}/merge`,
+      { encoding: "utf8" }
+    ).slice(0, 7);
+  }
+
+  if (!targetHash) {
+    console.error("fail");
+    return;
+  }
 
   console.log(
     "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++++"
   );
   console.log(targetHash);
   console.log(
-    "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+    "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   );
 
   const contents = await octokit.repos
