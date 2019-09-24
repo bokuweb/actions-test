@@ -192,7 +192,7 @@ const run = async () => {
           // responseType: "stream"
           responseType: "arraybuffer"
         }).then(response => {
-          const p = path.join("./report/expected", file.path);
+          const p = path.join("./report/expected", path.basename(file.path));
           console.log("download", file.path, p);
           mkdir.sync(path.dirname(p));
           // let blob = new Blob([response.data], { type: "image/png" });
