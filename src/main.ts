@@ -94,10 +94,10 @@ const run = async () => {
       })
     );
 
-    const timestamp = `${~~(new Date().getTime() * 1000)}`;
+    const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
     const stamp = await octokit.git.createBlob({
       ...repo,
-      content: `${~~(new Date().getTime() / 1000)}`
+      content: timestamp
     });
 
     tree.data.tree.push({
@@ -166,12 +166,17 @@ const run = async () => {
     `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
     { encoding: "utf8" }
   ).slice(0, 7);
+
+  console.log(
+    "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++"
+  );
   console.log(targetHash);
+  console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
   await Promise.all(
     (contents.data || [])
       .filter(file => {
-        console.log(file.path);
+        console.log("path", file.path);
         return (
           !!file.download_url &&
           [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
