@@ -66,7 +66,7 @@ const run = async () => {
   const publish = async () => {
     await Promise.all(
       glob.sync("./report/**/*.*").map(async p => {
-        console.log(p);
+        console.log("publish path", p);
         const file = fs.readFileSync(p);
         const content = Buffer.from(file).toString("base64");
         const blob = await octokit.git.createBlob({
@@ -81,6 +81,8 @@ const run = async () => {
             event.pull_request.head &&
             event.pull_request.head.sha);
 
+        console.log("sha", sha);
+
         tree.data.tree.push({
           path: path
             .join(`reg${sha.slice(0, 7)}`, p.replace("report/", ""))
@@ -92,10 +94,10 @@ const run = async () => {
       })
     );
 
-    const timestamp = `${~~(new Date().getTime() * 1000)}`;
+    const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
     const stamp = await octokit.git.createBlob({
       ...repo,
-      content: `${~~(new Date().getTime() / 1000)}`
+      content: timestamp
     });
 
     tree.data.tree.push({
@@ -164,12 +166,17 @@ const run = async () => {
     `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
     { encoding: "utf8" }
   ).slice(0, 7);
+
+  console.log(
+    "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++"
+  );
   console.log(targetHash);
+  console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
   await Promise.all(
     (contents.data || [])
       .filter(file => {
-        console.log(file.path);
+        console.log("path", file.path);
         return (
           !!file.download_url &&
           [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
@@ -186,6 +193,7 @@ const run = async () => {
           responseType: "arraybuffer"
         }).then(response => {
           const p = path.join("./report/expected", file.path);
+          console.log("download", file.path, p);
           mkdir.sync(path.dirname(p));
           // let blob = new Blob([response.data], { type: "image/png" });
           fs.writeFileSync(p, Buffer.from(response.data, "binary"));
@@ -224,12 +232,18 @@ const run = async () => {
     console.log(compareItem);
   });
 
+  emitter.on("complete", async result => {
+    console.log("===================================");
+    console.log("result", result);
+    await publish();
+  });
+
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
 
   // const timestamp = ~~(new Date().getTime() / 10000);
 
-  await publish();
+  // await publish();
 
   // const stamp = await octokit.git.createBlob({
   //   ...repo,
