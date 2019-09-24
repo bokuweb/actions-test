@@ -140,7 +140,7 @@ const run = async () => {
   ).slice(0, 7);
 
   console.log(
-    "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++"
+    "+++++++++++++++++++++++ targetHash +++++++++++++++++++++++++++++++++++++++"
   );
   console.log(targetHash);
   console.log(
