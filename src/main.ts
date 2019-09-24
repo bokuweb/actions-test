@@ -30,6 +30,7 @@ if (!event) {
 }
 
 const run = async () => {
+  const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
@@ -91,7 +92,6 @@ const run = async () => {
       })
     );
 
-    const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
     const stamp = await octokit.git.createBlob({
       ...repo,
       content: timestamp
@@ -198,6 +198,16 @@ const run = async () => {
   emitter.on("complete", async result => {
     console.log("result", result);
     await publish();
+
+    octokit.issues.createComment({
+      ...repo,
+      number: event.number,
+      body: "hello"
+      // commit_id: currentHash,
+      // path,
+      // position
+    });
+
     console.log("done");
   });
 };
