@@ -164,7 +164,7 @@ const run = async () => {
   const contents = await octokit.repos
     .getContents({
       ...repo,
-      path: `reg${targetHash}/actual/`,
+      path: `reg${targetHash}/actual`,
       ref: BRANCH_NAME
     })
     .catch(() => {
