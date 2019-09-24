@@ -29,6 +29,8 @@ if (!event) {
   throw new Error("Failed to get github event.json..");
 }
 
+console.log(event);
+
 const run = async () => {
   const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   const heads = await octokit.git.listRefs(repo);
@@ -199,13 +201,13 @@ const run = async () => {
     console.log("result", result);
     await publish();
 
+    const [owner, reponame] = event.repository.full_name.split("/");
+    const url = `https://${owner}.github.io/${reponame}/reg${currentHash}/`;
+
     await octokit.issues.createComment({
       ...repo,
       number: event.number,
-      body: "hello"
-      // commit_id: currentHash,
-      // path,
-      // position
+      body: url
     });
 
     console.log("done");
