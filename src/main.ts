@@ -84,7 +84,7 @@ const run = async () => {
 
         tree.data.tree.push({
           path: path
-            .join(`reg${currentHash}`, p.replace("report/", ""))
+            .join(`${currentHash}`, p.replace("report/", ""))
             .replace(/^\.\//, ""),
           mode: "100644",
           type: "blob",
@@ -100,7 +100,7 @@ const run = async () => {
 
     tree.data.tree.push({
       path: path
-        .join(`reg${currentHash}`, `${timestamp}.txt`)
+        .join(`${currentHash}`, `${timestamp}.txt`)
         .replace(/^\.\//, ""),
       mode: "100644",
       sha: stamp.data.sha
@@ -150,7 +150,7 @@ const run = async () => {
   const contents = await octokit.repos
     .getContents({
       ...repo,
-      path: `reg${targetHash}/actual`,
+      path: `${targetHash}/actual`,
       ref: BRANCH_NAME
     })
     .catch(() => {
