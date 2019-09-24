@@ -25,8 +25,6 @@ try {
   }
 } catch (e) {}
 
-console.log(event);
-
 if (!event) {
   throw new Error("Failed to get github event.json..");
 }
@@ -56,18 +54,19 @@ const run = async () => {
     });
 
   const ref = branch.data.name;
-
-  let tree = await octokit.git.getTree({
+  const tree = await octokit.git.getTree({
     ...repo,
-    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
+    tree_sha: branch.data.commit.sha,
     recursive: 1
   });
 
-  const sha =
+  const currentHash =
     event.after ||
-    (event.pull_request &&
+    (
+      event.pull_request &&
       event.pull_request.head &&
-      event.pull_request.head.sha);
+      event.pull_request.head.sha
+    ).slice(0, 7);
 
   const publish = async () => {
     await Promise.all(
@@ -81,11 +80,9 @@ const run = async () => {
           encoding: "base64"
         });
 
-        console.log("sha", sha);
-
         tree.data.tree.push({
           path: path
-            .join(`reg${sha.slice(0, 7)}`, p.replace("report/", ""))
+            .join(`reg${currentHash}`, p.replace("report/", ""))
             .replace(/^\.\//, ""),
           mode: "100644",
           type: "blob",
@@ -102,7 +99,7 @@ const run = async () => {
 
     tree.data.tree.push({
       path: path
-        .join(`reg${sha.slice(0, 7)}`, `${timestamp}.txt`)
+        .join(`reg${currentHash}`, `${timestamp}.txt`)
         .replace(/^\.\//, ""),
       mode: "100644",
       sha: stamp.data.sha
@@ -136,21 +133,6 @@ const run = async () => {
     return;
   }
 
-  /*
-      {
-      name: 'open .png',
-      path: 'test/open .png',
-      sha: '62aeef103df7a3206992a9c9e742af414c7146e6',
-      size: 300852,
-      url: 'https://api.github.com/repos/bokuweb/actions-test/contents/test/open%20.png?ref=gh-pages',
-      html_url: 'https://github.com/bokuweb/actions-test/blob/gh-pages/test/open%20.png',
-      git_url: 'https://api.github.com/repos/bokuweb/actions-test/git/blobs/62aeef103df7a3206992a9c9e742af414c7146e6',
-      download_url: 'https://raw.githubusercontent.com/bokuweb/actions-test/gh-pages/test/open%20.png',
-      type: 'file',
-      _links: [Object]
-    }
-    */
-
   const targetHash = execSync(
     `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
     { encoding: "utf8" }
@@ -172,12 +154,9 @@ const run = async () => {
       return { data: [] };
     });
 
-  console.log("contents", contents);
-
   await Promise.all(
     (contents.data || [])
       .filter(file => {
-        console.log("path", file.path);
         return (
           !!file.download_url &&
           [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
@@ -190,34 +169,17 @@ const run = async () => {
         return axios({
           method: "get",
           url: file.download_url,
-          // responseType: "stream"
           responseType: "arraybuffer"
         }).then(response => {
           const p = path.join("./report/expected", path.basename(file.path));
-          console.log("download", file.path, p);
           mkdir.sync(path.dirname(p));
-          // let blob = new Blob([response.data], { type: "image/png" });
           fs.writeFileSync(p, Buffer.from(response.data, "binary"));
-          //response.data.pipe(fs.createWriteStream(p));
         });
       })
   );
 
-  //   console.log(
-  //     fs.readFileSync(path.join("./expected", contents.data[1].path), "utf-8")
-  //   );
-  console.log("download complete");
-
-  console.log("head", head);
-
-  //
-  // Get branch if not exist create one.
-
-  console.log("branch", branch);
-
-  console.log(ref);
-
-  // cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+  // console.log("download complete");
+  // console.log("branch", branch);
   const emitter = compare({
     actualDir: "./report/actual",
     expectedDir: "./report/expected",
@@ -234,52 +196,10 @@ const run = async () => {
   });
 
   emitter.on("complete", async result => {
-    console.log("===================================");
     console.log("result", result);
     await publish();
+    console.log("done");
   });
-
-  // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
-  // const content = Buffer.from(image).toString("base64");
-
-  // const timestamp = ~~(new Date().getTime() / 10000);
-
-  // await publish();
-
-  // const stamp = await octokit.git.createBlob({
-  //   ...repo,
-  //   content: `${~~(new Date().getTime() / 1000)}`
-  // });
-  // tree.data.tree.push({
-  //   path: path
-  //     .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
-  //     .replace(/^\.\//, ""),
-  //   mode: "100644",
-  //   sha: stamp.data.sha
-  // });
-
-  //   const newTree = await octokit.git.createTree({
-  //     ...repo,
-  //     tree: tree.data.tree
-  //   });
-  //
-  //   const newCommit = await octokit.git.createCommit({
-  //     ...repo,
-  //     tree: newTree.data.sha,
-  //     message: "Commit By reg!",
-  //     parents: [branch.data.commit.sha]
-  //   });
-  //
-  //   console.log("ref", ref);
-  //
-  //   await octokit.git.updateRef({
-  //     ...repo,
-  //     ref: `heads/${ref}`,
-  //     sha: newCommit.data.sha
-  //   });
-  console.log("done");
 };
 
-// if (typeof event.number !== "undefined" && event.pull_request) {
 run();
-// }
