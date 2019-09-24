@@ -32,12 +32,6 @@ if (!event) {
 }
 
 const run = async () => {
-  const targetHash = execSync(
-    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
-    { encoding: "utf8" }
-  ).slice(0, 7);
-  console.log(targetHash);
-
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
   const headCommit = await octokit.git.getCommit({
@@ -53,6 +47,83 @@ const run = async () => {
       ref: `refs/heads/${BRANCH_NAME}`,
       sha: headCommit.data.sha
     });
+  }
+
+  const branch = await octokit.repos
+    .getBranch({ ...repo, branch: BRANCH_NAME })
+    .catch(e => {
+      throw new Error("Failed to fetch branch.");
+    });
+
+  const ref = branch.data.name;
+
+  let tree = await octokit.git.getTree({
+    ...repo,
+    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
+    recursive: 1
+  });
+
+  const publish = async () => {
+    await Promise.all(
+      glob.sync("./report/**/*.*").map(async p => {
+        console.log(p);
+        const file = fs.readFileSync(p);
+        const content = Buffer.from(file).toString("base64");
+        const blob = await octokit.git.createBlob({
+          ...repo,
+          content,
+          encoding: "base64"
+        });
+        tree.data.tree.push({
+          path: path
+            .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
+            .replace(/^\.\//, ""),
+          mode: "100644",
+          type: "blob",
+          sha: blob.data.sha
+        });
+      })
+    );
+
+    const timestamp = `${~~(new Date().getTime() * 1000)}`;
+    const stamp = await octokit.git.createBlob({
+      ...repo,
+      content: `${~~(new Date().getTime() / 1000)}`
+    });
+
+    tree.data.tree.push({
+      path: path
+        .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+        .replace(/^\.\//, ""),
+      mode: "100644",
+      sha: stamp.data.sha
+    });
+
+    const newTree = await octokit.git.createTree({
+      ...repo,
+      tree: tree.data.tree
+    });
+
+    const newCommit = await octokit.git.createCommit({
+      ...repo,
+      tree: newTree.data.sha,
+      message: "Commit By reg!",
+      parents: [branch.data.commit.sha]
+    });
+
+    await octokit.git.updateRef({
+      ...repo,
+      ref: `heads/${ref}`,
+      sha: newCommit.data.sha
+    });
+  };
+
+  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+
+  // Not PR
+  if (typeof event.number === "undefined") {
+    await publish();
+    return;
   }
 
   const contents = await octokit.repos
@@ -81,6 +152,13 @@ const run = async () => {
       _links: [Object]
     }
     */
+
+  const targetHash = execSync(
+    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+    { encoding: "utf8" }
+  ).slice(0, 7);
+  console.log(targetHash);
+
   await Promise.all(
     (contents.data || [])
       .filter(file => {
@@ -118,18 +196,12 @@ const run = async () => {
 
   //
   // Get branch if not exist create one.
-  let branch = await octokit.repos
-    .getBranch({ ...repo, branch: BRANCH_NAME })
-    .catch(e => {
-      throw new Error("Failed to fetch branch.");
-    });
 
   console.log("branch", branch);
 
-  const ref = branch.data.name;
   console.log(ref);
 
-  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+  // cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
   const emitter = compare({
     actualDir: "./report/actual",
     expectedDir: "./report/expected",
@@ -148,69 +220,44 @@ const run = async () => {
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
 
-  let tree = await octokit.git.getTree({
-    ...repo,
-    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
-    recursive: 1
-  });
+  // const timestamp = ~~(new Date().getTime() / 10000);
 
-  const timestamp = ~~(new Date().getTime() / 10000);
+  await publish();
 
-  await Promise.all(
-    glob.sync("./report/**/*.*").map(async p => {
-      console.log(p);
-      const file = fs.readFileSync(p);
-      const content = Buffer.from(file).toString("base64");
-      const blob = await octokit.git.createBlob({
-        ...repo,
-        content,
-        encoding: "base64"
-      });
-      tree.data.tree.push({
-        path: path
-          .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
-          .replace(/^\.\//, ""),
-        mode: "100644",
-        type: "blob",
-        sha: blob.data.sha
-      });
-    })
-  );
+  // const stamp = await octokit.git.createBlob({
+  //   ...repo,
+  //   content: `${~~(new Date().getTime() / 1000)}`
+  // });
+  // tree.data.tree.push({
+  //   path: path
+  //     .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+  //     .replace(/^\.\//, ""),
+  //   mode: "100644",
+  //   sha: stamp.data.sha
+  // });
 
-  const stamp = await octokit.git.createBlob({
-    ...repo,
-    content: `${~~(new Date().getTime() / 1000)}`
-  });
-  tree.data.tree.push({
-    path: path
-      .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
-      .replace(/^\.\//, ""),
-    mode: "100644",
-    sha: stamp.data.sha
-  });
-
-  const newTree = await octokit.git.createTree({
-    ...repo,
-    tree: tree.data.tree
-  });
-
-  const newCommit = await octokit.git.createCommit({
-    ...repo,
-    tree: newTree.data.sha,
-    message: "Commit By reg!",
-    parents: [branch.data.commit.sha]
-  });
-
-  console.log("ref", ref);
-
-  await octokit.git.updateRef({
-    ...repo,
-    ref: `heads/${ref}`,
-    sha: newCommit.data.sha
-  });
+  //   const newTree = await octokit.git.createTree({
+  //     ...repo,
+  //     tree: tree.data.tree
+  //   });
+  //
+  //   const newCommit = await octokit.git.createCommit({
+  //     ...repo,
+  //     tree: newTree.data.sha,
+  //     message: "Commit By reg!",
+  //     parents: [branch.data.commit.sha]
+  //   });
+  //
+  //   console.log("ref", ref);
+  //
+  //   await octokit.git.updateRef({
+  //     ...repo,
+  //     ref: `heads/${ref}`,
+  //     sha: newCommit.data.sha
+  //   });
   console.log("done");
 };
 
-if (typeof event.number !== "undefined" && event.pull_request) {
-  run();
-}
+// if (typeof event.number !== "undefined" && event.pull_request) {
+run();
+// }
