@@ -74,9 +74,16 @@ const run = async () => {
           content,
           encoding: "base64"
         });
+
+        const sha =
+          event.after ||
+          (event.pull_request &&
+            event.pull_request.head &&
+            event.pull_request.head.sha);
+
         tree.data.tree.push({
           path: path
-            .join(`reg${event.after.slice(0, 7)}`, p.replace("report/", ""))
+            .join(`reg${sha(0, 7)}`, p.replace("report/", ""))
             .replace(/^\.\//, ""),
           mode: "100644",
           type: "blob",
