@@ -66,7 +66,7 @@ const run = async () => {
   const publish = async () => {
     await Promise.all(
       glob.sync("./report/**/*.*").map(async p => {
-        console.log(p);
+        console.log("publish path", p);
         const file = fs.readFileSync(p);
         const content = Buffer.from(file).toString("base64");
         const blob = await octokit.git.createBlob({
@@ -80,6 +80,8 @@ const run = async () => {
           (event.pull_request &&
             event.pull_request.head &&
             event.pull_request.head.sha);
+
+        console.log("sha", sha);
 
         tree.data.tree.push({
           path: path
