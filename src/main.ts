@@ -199,7 +199,7 @@ const run = async () => {
     console.log("result", result);
     await publish();
 
-    octokit.issues.createComment({
+    await octokit.issues.createComment({
       ...repo,
       number: event.number,
       body: "hello"
