@@ -63,6 +63,12 @@ const run = async () => {
     recursive: 1
   });
 
+  const sha =
+    event.after ||
+    (event.pull_request &&
+      event.pull_request.head &&
+      event.pull_request.head.sha);
+
   const publish = async () => {
     await Promise.all(
       glob.sync("./report/**/*.*").map(async p => {
@@ -74,12 +80,6 @@ const run = async () => {
           content,
           encoding: "base64"
         });
-
-        const sha =
-          event.after ||
-          (event.pull_request &&
-            event.pull_request.head &&
-            event.pull_request.head.sha);
 
         console.log("sha", sha);
 
@@ -102,7 +102,7 @@ const run = async () => {
 
     tree.data.tree.push({
       path: path
-        .join(`reg${event.after.slice(0, 7)}`, `${timestamp}.txt`)
+        .join(`reg${sha.slice(0, 7)}`, `${timestamp}.txt`)
         .replace(/^\.\//, ""),
       mode: "100644",
       sha: stamp.data.sha
