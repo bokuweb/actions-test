@@ -63,13 +63,12 @@ const run = async () => {
     recursive: 1
   });
 
-  const currentHash =
+  const currentHash = (
     event.after ||
-    (
-      event.pull_request &&
+    (event.pull_request &&
       event.pull_request.head &&
-      event.pull_request.head.sha
-    ).slice(0, 7);
+      event.pull_request.head.sha)
+  ).slice(0, 7);
 
   const publish = async () => {
     await Promise.all(
