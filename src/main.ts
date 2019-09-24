@@ -123,7 +123,8 @@ const run = async () => {
     await octokit.git.updateRef({
       ...repo,
       ref: `heads/${ref}`,
-      sha: newCommit.data.sha
+      sha: newCommit.data.sha,
+      force: true
     });
   };
 
