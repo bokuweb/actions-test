@@ -188,6 +188,7 @@ const run = async () => {
           responseType: "arraybuffer"
         }).then(response => {
           const p = path.join("./report/expected", file.path);
+          console.log("download", file.path, p);
           mkdir.sync(path.dirname(p));
           // let blob = new Blob([response.data], { type: "image/png" });
           fs.writeFileSync(p, Buffer.from(response.data, "binary"));
@@ -226,12 +227,18 @@ const run = async () => {
     console.log(compareItem);
   });
 
+  emitter.on("complete", async result => {
+    console.log("===================================");
+    console.log("result", result);
+    await publish();
+  });
+
   // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
   // const content = Buffer.from(image).toString("base64");
 
   // const timestamp = ~~(new Date().getTime() / 10000);
 
-  await publish();
+  // await publish();
 
   // const stamp = await octokit.git.createBlob({
   //   ...repo,
