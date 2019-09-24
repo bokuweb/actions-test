@@ -135,18 +135,6 @@ const run = async () => {
     return;
   }
 
-  const contents = await octokit.repos
-    .getContents({
-      ...repo,
-      path: "",
-      ref: BRANCH_NAME
-    })
-    .catch(() => {
-      return { data: [] };
-    });
-
-  console.log("contents", contents);
-
   /*
       {
       name: 'open .png',
@@ -172,6 +160,18 @@ const run = async () => {
   );
   console.log(targetHash);
   console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+
+  const contents = await octokit.repos
+    .getContents({
+      ...repo,
+      path: `reg${targetHash}`,
+      ref: BRANCH_NAME
+    })
+    .catch(() => {
+      return { data: [] };
+    });
+
+  console.log("contents", contents);
 
   await Promise.all(
     (contents.data || [])
