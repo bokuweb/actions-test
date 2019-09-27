@@ -4,6 +4,13 @@ author: "bokuweb"
 inputs:
   myToken:
     description: "A token with access to your repository scoped in as a secret."
+  name:
+    description: "Artifact name"
+    default: "reg"
+  path:
+    description: "Directory containing files to upload"
+    default: "report"
 runs:
   using: "node12"
   main: "lib/main.js"
+  plugin: "publish"
