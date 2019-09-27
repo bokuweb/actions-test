@@ -13,4 +13,3 @@ inputs:
 runs:
   using: "node12"
   main: "lib/main.js"
-  plugin: "publish"
