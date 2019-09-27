@@ -14,7 +14,7 @@ const token = core.getInput("secret");
 
 const octokit = new github.GitHub(token);
 
-const { repo } = github.context;
+const { repo, payload } = github.context;
 
 const BRANCH_NAME = "gh-pages";
 
@@ -71,28 +71,28 @@ const run = async () => {
   ).slice(0, 7);
 
   const publish = async () => {
-    await Promise.all(
-      glob.sync("./report/**/*.*").map(async p => {
-        console.log("publish path", p);
-        const file = fs.readFileSync(p);
-        const content = Buffer.from(file).toString("base64");
-        const blob = await octokit.git.createBlob({
-          ...repo,
-          content,
-          encoding: "base64"
-        });
-
-        tree.data.tree.push({
-          path: path
-            .join(`${currentHash}`, p.replace("report/", ""))
-            .replace(/^\.\//, ""),
-          mode: "100644",
-          type: "blob",
-          sha: blob.data.sha
-        });
-      })
-    );
-
+    // await Promise.all(
+    //   glob.sync("./report/**/*.*").map(async p => {
+    //     console.log("publish path", p);
+    //     const file = fs.readFileSync(p);
+    //     const content = Buffer.from(file).toString("base64");
+    //     const blob = await octokit.git.createBlob({
+    //       ...repo,
+    //       content,
+    //       encoding: "base64"
+    //     });
+    //
+    //     tree.data.tree.push({
+    //       path: path
+    //         .join(`${currentHash}`, p.replace("report/", ""))
+    //         .replace(/^\.\//, ""),
+    //       mode: "100644",
+    //       type: "blob",
+    //       sha: blob.data.sha
+    //     });
+    //   })
+    // );
+    /*
     const stamp = await octokit.git.createBlob({
       ...repo,
       content: timestamp
@@ -124,6 +124,38 @@ const run = async () => {
       sha: newCommit.data.sha,
       force: true
     });
+    */
+
+    const releaseId = payload.release.id;
+    let upload_url;
+    try {
+      ({
+        data: { upload_url }
+      } = await octokit.repos.getRelease({ ...repo, release_id: releaseId }));
+    } catch (error) {
+      // return setFailed(error.message);
+      console.log(error);
+    }
+
+    const filepath = glob.sync("./report/**/*.*", {
+      absolute: true,
+      nocase: true
+    });
+    const file = fs.createReadStream(filepath[0]);
+
+    try {
+      await octokit.repos.uploadReleaseAsset({
+        url: upload_url,
+        file: file,
+        name: filepath[0].split("/").slice(-1)[0],
+        headers: {
+          "content-length": fs.statSync(filepath[0]).size,
+          "content-type": "application/octet-stream"
+        }
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
