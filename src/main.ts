@@ -127,6 +127,7 @@ const run = async () => {
     */
 
     const releaseId = payload.release.id;
+    console.log("payload", payload);
     let upload_url;
     try {
       ({
