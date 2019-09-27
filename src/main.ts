@@ -125,38 +125,41 @@ const run = async () => {
       force: true
     });
     */
+    // const releaseId = payload.release.id;
+    // console.log("payload", payload);
+    // let upload_url;
+    // try {
+    //   ({
+    //     data: { upload_url }
+    //   } = await octokit.repos.getRelease({ ...repo, release_id: releaseId }));
+    // } catch (error) {
+    //   // return setFailed(error.message);
+    //   console.log(error);
+    // }
+    //
+    // const filepath = glob.sync("./report/**/*.*", {
+    //   absolute: true,
+    //   nocase: true
+    // });
+    // const file = fs.createReadStream(filepath[0]);
+    //
+    // try {
+    //   await octokit.repos.uploadReleaseAsset({
+    //     url: upload_url,
+    //     file: file,
+    //     name: filepath[0].split("/").slice(-1)[0],
+    //     headers: {
+    //       "content-length": fs.statSync(filepath[0]).size,
+    //       "content-type": "application/octet-stream"
+    //     }
+    //   });
+    // } catch (error) {
+    //   console.log(error.message);
+    // }
 
-    const releaseId = payload.release.id;
-    console.log("payload", payload);
-    let upload_url;
-    try {
-      ({
-        data: { upload_url }
-      } = await octokit.repos.getRelease({ ...repo, release_id: releaseId }));
-    } catch (error) {
-      // return setFailed(error.message);
-      console.log(error);
-    }
-
-    const filepath = glob.sync("./report/**/*.*", {
-      absolute: true,
-      nocase: true
+    octokit.gists.create({
+      files: [""]
     });
-    const file = fs.createReadStream(filepath[0]);
-
-    try {
-      await octokit.repos.uploadReleaseAsset({
-        url: upload_url,
-        file: file,
-        name: filepath[0].split("/").slice(-1)[0],
-        headers: {
-          "content-length": fs.statSync(filepath[0]).size,
-          "content-type": "application/octet-stream"
-        }
-      });
-    } catch (error) {
-      console.log(error.message);
-    }
   };
 
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
