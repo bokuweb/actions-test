@@ -56,4 +56,4 @@ const run = async () => {
 
 setTimeout(async () => {
   await run();
-}, 20000);
+}, 60000);
