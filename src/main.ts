@@ -32,10 +32,12 @@ const run = async () => {
       event.pull_request.head.sha);
 
   const [owner, reponame] = event.repository.full_name.split("/");
-  const url = `https://github.com/${owner}/${reponame}/commit/${currentHash}`;
+  const url = `https://github.com/${owner}/${reponame}/commit/${currentHash}/checks`;
 
+  console.log(url);
   const { data } = await axios(url);
   const $ = cheerio.load(data);
+  console.log("aaaa", data);
   $("a").each(async (i, elem) => {
     if ($(elem).text() === "my-artifact") {
       const href = $(elem)[0].attribs.href;
@@ -52,10 +54,6 @@ const run = async () => {
   });
 };
 
-for (let i = 0; i < 3; i++) {
-  if (!succeeded) {
-    setTimeout(async () => {
-      await run();
-    }, i * 1000);
-  }
-}
+setTimeout(async () => {
+  await run();
+}, 20000);
