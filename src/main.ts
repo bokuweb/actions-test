@@ -11,6 +11,9 @@ const octokit = new github.GitHub(token);
 
 const { repo } = github.context;
 
+const log = fs.readFileSync("/var/log/messages", "utf8");
+console.log(log);
+
 let event;
 try {
   if (process.env.GITHUB_EVENT_PATH) {
@@ -54,6 +57,4 @@ const run = async () => {
   });
 };
 
-setTimeout(async () => {
-  await run();
-}, 60000);
+run();
