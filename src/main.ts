@@ -35,8 +35,10 @@ const run = async () => {
 
   console.log("checks url", url);
   const { data } = await axios(url);
+  console.log("data", data);
   const $ = cheerio.load(data);
   $("a").each(async (i, elem) => {
+    console.log("++");
     if ($(elem).text() === "my-artifact") {
       const href = $(elem)[0].attribs.href;
       console.log("href", href);
