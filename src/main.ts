@@ -29,14 +29,17 @@ const run = async () => {
       event.pull_request.head &&
       event.pull_request.head.sha);
 
+  console.log("current hash", currentHash);
   const [owner, reponame] = event.repository.full_name.split("/");
   const url = `https://github.com/${owner}/${reponame}/commit/${currentHash}`;
 
+  console.log("checks url", url);
   const { data } = await axios(url);
   const $ = cheerio.load(data);
   $("a").each(async (i, elem) => {
     if ($(elem).text() === "my-artifact") {
       const href = $(elem)[0].attribs.href;
+      console.log("href", href);
       await octokit.issues.createComment({
         ...repo,
         number: event.number,
