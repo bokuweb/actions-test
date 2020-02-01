@@ -212,6 +212,14 @@ const run = async () => {
   });
 
   console.log(files);
+  files.files
+    .filter(file => !file.dir)
+    .forEach(file => {
+      fs.writeFileSync(
+        path.join("__reg__", "expected", path.basename(file.name)),
+        file._data
+      );
+    });
 
   /*  const contents = await octokit.repos
     .getContents({
@@ -251,13 +259,12 @@ down      ...repo,
   // console.log("download complete");
   // console.log("branch", branch);
 
-  /*
   const emitter = compare({
-    actualDir: "./report/actual",
-    expectedDir: "./report/expected",
-    diffDir: "./report/diff",
-    json: "./report/reg.json",
-    report: "./report/index.html",
+    actualDir: "./__reg__/actual",
+    expectedDir: "./__reg__/expected",
+    diffDir: "./__reg__/diff",
+    json: "./__reg__/reg.json",
+    report: "./__reg__/index.html",
     update: false,
     ignoreChange: true,
     urlPrefix: ""
@@ -282,7 +289,6 @@ down      ...repo,
 
     console.log("done");
   });
-  */
 };
 
 run();
