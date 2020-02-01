@@ -2,8 +2,9 @@ name: "Test"
 description: "Action Tests"
 author: "bokuweb"
 inputs:
-  myToken:
-    description: "A token with access to your repository scoped in as a secret."
+  actual_directory_path:
+    description: "Path to actual images directory."
+    required: true
 runs:
   using: "node12"
   main: "lib/main.js"

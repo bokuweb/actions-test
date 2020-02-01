@@ -29,10 +29,13 @@ console.log(event);
 
 const [owner, reponame] = event.repository.full_name.split("/");
 
-const actual = core.getInput("actualDirectory");
+const actual = core.getInput("actual_directory_path");
 
 console.log(owner, reponame);
-console.log(actual);
+console.log(actual, "aaa");
+
+console.log(process.env.INPUT_ACTUAL_DIRECTORY_PATH, "===-=-");
+
 const run = async () => {
   const runs = await octokit.actions.listRepoWorkflowRuns(repo);
   // console.log("==== runs ==== ", runs);
