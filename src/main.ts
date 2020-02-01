@@ -178,7 +178,17 @@ const run = async () => {
     run.head_sha.startsWith(targetHash)
   );
 
-  console.log(targetRun);
+  console.log("targetRun", targetRun);
+  if (!targetRun) {
+    console.error("Failed to find target run");
+    return;
+  }
+  const artifacts = await octokit.actions.listWorkflowRunArtifacts({
+    ...repo,
+    run_id: targetRun.id
+  });
+
+  console.log("artifacts", artifacts);
 
   /*  const contents = await octokit.repos
     .getContents({
