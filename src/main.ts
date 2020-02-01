@@ -215,12 +215,11 @@ const run = async () => {
   files.files
     .filter(file => !file.dir)
     .forEach(file => {
-      fs.writeFileSync(
-        path.join("__reg__", "expected", path.basename(file.name)),
-        file._data
-      );
+      const f = path.join("__reg__", "expected", path.basename(file.name));
+      fs.mkdirSync(f);
+      fs.writeFileSync(f, file._data);
     });
-
+  console.log("=========");
   /*  const contents = await octokit.repos
     .getContents({
 down      ...repo,
