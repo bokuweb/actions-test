@@ -6,6 +6,7 @@ import { execSync } from "child_process";
 import cpx from "cpx";
 
 const compare = require("reg-cli");
+const NodeZip = require("node-zip");
 
 const token = core.getInput("secret");
 
@@ -204,6 +205,14 @@ const run = async () => {
   });
 
   console.log(zip);
+
+  const files = new NodeZip(zip, {
+    base64: false,
+    checkCRC32: true
+  });
+
+  console.log(files);
+
   /*  const contents = await octokit.repos
     .getContents({
 down      ...repo,
