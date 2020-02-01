@@ -206,7 +206,7 @@ const run = async () => {
 
   console.log(zip);
 
-  const files = new NodeZip(zip, {
+  const files = new NodeZip(zip.data, {
     base64: false,
     checkCRC32: true
   });
