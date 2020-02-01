@@ -188,7 +188,8 @@ const run = async () => {
     run_id: targetRun.id
   });
 
-  console.log("artifacts", artifacts);
+  console.log("artifacts", artifacts.data);
+  console.log("artifacts", (artifacts.data as any).artifacts);
 
   /*  const contents = await octokit.repos
     .getContents({
