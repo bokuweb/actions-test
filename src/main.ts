@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
+import { execSync } from "child_process";
 import * as path from "path";
 import glob from "glob";
 import mkdir from "make-dir";
@@ -13,7 +14,9 @@ const token = core.getInput("secret");
 
 const octokit = new github.GitHub(token);
 
-const repoInfo = github.context.repo;
+const { repo } = github.context;
+
+const BRANCH_NAME = "gh-pages";
 
 let event;
 try {
@@ -22,104 +25,168 @@ try {
   }
 } catch (e) {}
 
-console.log(event);
-
 if (!event) {
-  throw new Error("Failed to get github event.json");
+  throw new Error("Failed to get github event.json..");
 }
 
+console.log(event);
+
 const run = async () => {
-  const heads = await octokit.git.listRefs({
-    ...repoInfo
+  const runs = await octokit.actions.listRepoWorkflowRuns(repo);
+  console.log("runs");
+  console.log(runs);
+
+  const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
+  const heads = await octokit.git.listRefs(repo);
+  const head = heads.data[0];
+  const headCommit = await octokit.git.getCommit({
+    ...repo,
+    commit_sha: head.object.sha
+  });
+  const branches = await octokit.repos.listBranches(repo);
+  const found = branches.data.find(b => b.name === BRANCH_NAME);
+
+  if (!found) {
+    await octokit.git.createRef({
+      ...repo,
+      ref: `refs/heads/${BRANCH_NAME}`,
+      sha: headCommit.data.sha
+    });
+  }
+
+  const branch = await octokit.repos
+    .getBranch({ ...repo, branch: BRANCH_NAME })
+    .catch(e => {
+      throw new Error("Failed to fetch branch.");
+    });
+
+  const ref = branch.data.name;
+  const tree = await octokit.git.getTree({
+    ...repo,
+    tree_sha: branch.data.commit.sha,
+    recursive: "1"
   });
 
-  const branches = await octokit.repos.listBranches(repoInfo);
+  const currentHash = (
+    event.after ||
+    (event.pull_request &&
+      event.pull_request.head &&
+      event.pull_request.head.sha)
+  ).slice(0, 7);
 
-  console.log("branches", branches.data);
+  const publish = async () => {
+    await Promise.all(
+      glob.sync("./report/**/*.*").map(async p => {
+        console.log("publish path", p);
+        const file = fs.readFileSync(p);
+        const content = Buffer.from(file).toString("base64");
+        const blob = await octokit.git.createBlob({
+          ...repo,
+          content,
+          encoding: "base64"
+        });
 
-  const contents = await octokit.repos
+        // tree.data.tree.push({
+        //   path: path
+        //     .join(`${currentHash}`, p.replace("report/", ""))
+        //     .replace(/^\.\//, ""),
+        //   mode: "100644",
+        //   type: "blob",
+        //   sha: blob.data.sha
+        // });
+      })
+    );
+
+    const stamp = await octokit.git.createBlob({
+      ...repo,
+      content: timestamp
+    });
+
+    // tree.data.tree.push({
+    //   path: path
+    //     .join(`${currentHash}`, `${timestamp}.txt`)
+    //     .replace(/^\.\//, ""),
+    //   mode: "100644",
+    //   sha: stamp.data.sha
+    // });
+
+    // const newTree = await octokit.git.createTree({
+    //   ...repo,
+    //   tree: tree.data.tree
+    // });
+
+    // const newCommit = await octokit.git.createCommit({
+    //   ...repo,
+    //   tree: newTree.data.sha,
+    //   message: "Commit By reg!",
+    //   parents: [branch.data.commit.sha]
+    // });
+
+    // await octokit.git.updateRef({
+    //   ...repo,
+    //   ref: `heads/${ref}`,
+    //   sha: newCommit.data.sha,
+    //   force: true
+    // });
+  };
+
+  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+
+  // Not PR
+  if (typeof event.number === "undefined") {
+    await publish();
+    return;
+  }
+
+  const targetHash = execSync(
+    `git merge-base -a origin/${event.pull_request.base.ref} origin/${event.pull_request.head.ref}`,
+    { encoding: "utf8" }
+  ).slice(0, 7);
+
+  console.log(
+    "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++++"
+  );
+  console.log(targetHash);
+  console.log(
+    "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  );
+
+  const contents = (await octokit.repos
     .getContents({
-      ...repoInfo,
-      path: "test",
-      ref: "gh-pages"
+      ...repo,
+      path: `${targetHash}/actual`,
+      ref: BRANCH_NAME
     })
     .catch(() => {
       return { data: [] };
-    });
+    })) as any;
 
-  console.log("contents", contents);
-
-  /*
-      {
-      name: 'open .png',
-      path: 'test/open .png',
-      sha: '62aeef103df7a3206992a9c9e742af414c7146e6',
-      size: 300852,
-      url: 'https://api.github.com/repos/bokuweb/actions-test/contents/test/open%20.png?ref=gh-pages',
-      html_url: 'https://github.com/bokuweb/actions-test/blob/gh-pages/test/open%20.png',
-      git_url: 'https://api.github.com/repos/bokuweb/actions-test/git/blobs/62aeef103df7a3206992a9c9e742af414c7146e6',
-      download_url: 'https://raw.githubusercontent.com/bokuweb/actions-test/gh-pages/test/open%20.png',
-      type: 'file',
-      _links: [Object]
-    }
-    */
   await Promise.all(
-    (contents.data || []).map(file => {
-      return axios({
-        method: "get",
-        url: file.download_url,
-        // responseType: "stream"
-        responseType: "arraybuffer"
-      }).then(response => {
-        const p = path.join("./report/expected", file.path);
-        mkdir.sync(path.dirname(p));
-        // let blob = new Blob([response.data], { type: "image/png" });
-        fs.writeFileSync(p, Buffer.from(response.data, "binary"));
-        //response.data.pipe(fs.createWriteStream(p));
-      });
-    })
+    (contents.data || [])
+      .filter(file => {
+        return (
+          !!file.download_url &&
+          [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
+            path.extname(file.download_url)
+          ) &&
+          file.path.includes(targetHash)
+        );
+      })
+      .map(file => {
+        return axios({
+          method: "get",
+          url: file.download_url,
+          responseType: "arraybuffer"
+        }).then(response => {
+          const p = path.join("./report/expected", path.basename(file.path));
+          mkdir.sync(path.dirname(p));
+          fs.writeFileSync(p, Buffer.from(response.data, "binary"));
+        });
+      })
   );
 
-  //   console.log(
-  //     fs.readFileSync(path.join("./expected", contents.data[1].path), "utf-8")
-  //   );
-  console.log("download complete");
-
-  let head = heads.data[0];
-  const headCommit = await octokit.git.getCommit({
-    ...repoInfo,
-    commit_sha: head.object.sha
-  });
-
-  console.log("head", head);
-
-  //
-  // Get branch if not exist create one.
-  let branch = await octokit.repos
-    .getBranch({
-      ...repoInfo,
-      branch: "gh-pages"
-    })
-    .catch(e => {
-      console.log(e);
-      return null;
-    });
-
-  if (!branch) return;
-
-  console.log("branch", branch);
-
-  const ref = branch
-    ? branch.data.name
-    : (await octokit.git.createRef({
-        ...repoInfo,
-        ref: "refs/heads/gh-pages",
-        sha: headCommit.data.sha
-      })).data.ref;
-
-  console.log(ref);
-
-  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+  // console.log("download complete");
+  // console.log("branch", branch);
   const emitter = compare({
     actualDir: "./report/actual",
     expectedDir: "./report/expected",
@@ -135,76 +202,21 @@ const run = async () => {
     console.log(compareItem);
   });
 
-  // const image = fs.readFileSync(path.join("./expected", contents.data[1].path));
-  // const content = Buffer.from(image).toString("base64");
+  emitter.on("complete", async result => {
+    console.log("result", result);
+    await publish();
 
-  // console.log(content);
+    const [owner, reponame] = event.repository.full_name.split("/");
+    const url = `https://${owner}.github.io/${reponame}/reg${currentHash}/`;
 
-  // const blob = await octokit.git.createBlob({
-  //   ...repoInfo,
-  //   content,
-  //   encoding: "base64"
-  // });
-
-  let tree = await octokit.git.getTree({
-    ...repoInfo,
-    tree_sha: branch.data.commit.sha, // headCommit.data.tree.sha,
-    recursive: 1
-  });
-
-  glob.sync("./report/**/*.*").forEach(async p => {
-    console.log(p);
-    const file = fs.readFileSync(p);
-    const content = Buffer.from(file).toString("base64");
-    const blob = await octokit.git.createBlob({
-      ...repoInfo,
-      content,
-      encoding: "base64"
+    await octokit.issues.createComment({
+      ...repo,
+      number: event.number,
+      body: url
     });
-    tree.data.tree.push({
-      path: p,
-      mode: "100644",
-      type: "blob",
-      sha: blob.data.sha
-    });
-  });
 
-  // tree.data.tree.pop();
-  // tree.data.tree.push({
-  //   path: "image222",
-  //   mode: "100644",
-  //   type: "blob",
-  //   sha: blob.data.sha
-  // });
-
-  const newTree = await octokit.git.createTree({
-    ...repoInfo,
-    tree: [
-      ...tree.data.tree
-      // {
-      //   path: "image.png",
-      //   mode: "100644",
-      //   type: "blob",
-      //   sha: blob.data.sha
-      // }
-    ]
+    console.log("done");
   });
-
-  const newCommit = await octokit.git.createCommit({
-    ...repoInfo,
-    tree: newTree.data.sha,
-    message: "Test",
-    parents: [branch.data.commit.sha]
-  });
-
-  await octokit.git.updateRef({
-    ...repoInfo,
-    ref: `heads/${ref}`,
-    sha: newCommit.data.sha
-  });
-  console.log("done");
 };
 
-// if (typeof event.number !== "undefined" && event.pull_request) {
 run();
-//}
