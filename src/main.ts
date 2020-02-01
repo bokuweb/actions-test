@@ -32,36 +32,39 @@ const run = async () => {
   console.log("==== runs ==== ", runs);
   console.log(runs.data.workflow_runs);
 
-  const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
-  const heads = await octokit.git.listRefs(repo);
-  const head = heads.data[0];
-  const headCommit = await octokit.git.getCommit({
-    ...repo,
-    commit_sha: head.object.sha
-  });
-  const branches = await octokit.repos.listBranches(repo);
-  const found = branches.data.find(b => b.name === BRANCH_NAME);
+  // const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
+  //   const heads = await octokit.git.listRefs(repo);
+  //   const head = heads.data[0];
+  //   const headCommit = await octokit.git.getCommit({
+  //     ...repo,
+  //     commit_sha: head.object.sha
+  //   });
 
-  if (!found) {
-    await octokit.git.createRef({
-      ...repo,
-      ref: `refs/heads/${BRANCH_NAME}`,
-      sha: headCommit.data.sha
-    });
-  }
+  // console.log("current hash = ", head.object.sha);
 
-  const branch = await octokit.repos
-    .getBranch({ ...repo, branch: BRANCH_NAME })
-    .catch(e => {
-      throw new Error("Failed to fetch branch.");
-    });
+  // const branches = await octokit.repos.listBranches(repo);
+  // const found = branches.data.find(b => b.name === BRANCH_NAME);
 
-  const ref = branch.data.name;
-  const tree = await octokit.git.getTree({
-    ...repo,
-    tree_sha: branch.data.commit.sha,
-    recursive: "1"
-  });
+  // if (!found) {
+  //   await octokit.git.createRef({
+  //     ...repo,
+  //     ref: `refs/heads/${BRANCH_NAME}`,
+  //     sha: headCommit.data.sha
+  //   });
+  // }
+
+  //   const branch = await octokit.repos
+  //     .getBranch({ ...repo, branch: BRANCH_NAME })
+  //     .catch(e => {
+  //       throw new Error("Failed to fetch branch.");
+  //     });
+
+  // const ref = branch.data.name;
+  // const tree = await octokit.git.getTree({
+  //   ...repo,
+  //   tree_sha: branch.data.commit.sha,
+  //   recursive: "1"
+  // });
 
   const currentHash = (
     event.after ||
@@ -69,6 +72,14 @@ const run = async () => {
       event.pull_request.head &&
       event.pull_request.head.sha)
   ).slice(0, 7);
+
+  console.log("current hash = ", currentHash);
+
+  const currentRun = runs.data.workflow_runs.find(run =>
+    run.head_sha.startsWith(currentHash)
+  );
+
+  console.log("current run = ", currentRun);
 
   //  const publish = async () => {
   //    await Promise.all(
@@ -147,7 +158,13 @@ const run = async () => {
     "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   );
 
-  const contents = await octokit.repos
+  const targetRun = runs.data.workflow_runs.find(run =>
+    run.head_sha.startsWith(targetHash)
+  );
+
+  console.log(targetRun);
+
+  /*  const contents = await octokit.repos
     .getContents({
       ...repo,
       path: `${targetHash}/actual`,
@@ -155,7 +172,7 @@ const run = async () => {
     })
     .catch(() => {
       return { data: [] };
-    });
+    });*/
 
   /*
   await Promise.all(
@@ -184,6 +201,8 @@ const run = async () => {
 
   // console.log("download complete");
   // console.log("branch", branch);
+
+  /*
   const emitter = compare({
     actualDir: "./report/actual",
     expectedDir: "./report/expected",
@@ -214,6 +233,7 @@ const run = async () => {
 
     console.log("done");
   });
+  */
 };
 
 run();
