@@ -212,7 +212,7 @@ const run = async () => {
   });
 
   // console.log(files);
-  console.log("aaaaaaaaaaaaaaaaa");
+  console.log("aaaaaaaaaaaaaaaa!!!!!!!!!!!!!a");
   Object.keys(files.files)
     .map(key => files.files[key])
     .filter(file => !file.dir)
