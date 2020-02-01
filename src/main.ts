@@ -30,6 +30,7 @@ console.log(event);
 const run = async () => {
   const runs = await octokit.actions.listRepoWorkflowRuns(repo);
   console.log("==== runs ==== ", runs);
+  console.log(runs.data.workflow_runs);
 
   const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   const heads = await octokit.git.listRefs(repo);
