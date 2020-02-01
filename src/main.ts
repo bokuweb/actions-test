@@ -32,6 +32,9 @@ if (!event) {
 console.log(event);
 
 const run = async () => {
+  const runs = await octokit.actions.listRepoWorkflowRuns(repo);
+  console.log("==== runs ==== ", runs);
+
   const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
@@ -60,7 +63,7 @@ const run = async () => {
   const tree = await octokit.git.getTree({
     ...repo,
     tree_sha: branch.data.commit.sha,
-    recursive: 1
+    recursive: "1"
   });
 
   const currentHash = (
@@ -70,67 +73,67 @@ const run = async () => {
       event.pull_request.head.sha)
   ).slice(0, 7);
 
-  const publish = async () => {
-    await Promise.all(
-      glob.sync("./report/**/*.*").map(async p => {
-        console.log("publish path", p);
-        const file = fs.readFileSync(p);
-        const content = Buffer.from(file).toString("base64");
-        const blob = await octokit.git.createBlob({
-          ...repo,
-          content,
-          encoding: "base64"
-        });
-
-        tree.data.tree.push({
-          path: path
-            .join(`${currentHash}`, p.replace("report/", ""))
-            .replace(/^\.\//, ""),
-          mode: "100644",
-          type: "blob",
-          sha: blob.data.sha
-        });
-      })
-    );
-
-    const stamp = await octokit.git.createBlob({
-      ...repo,
-      content: timestamp
-    });
-
-    tree.data.tree.push({
-      path: path
-        .join(`${currentHash}`, `${timestamp}.txt`)
-        .replace(/^\.\//, ""),
-      mode: "100644",
-      sha: stamp.data.sha
-    });
-
-    const newTree = await octokit.git.createTree({
-      ...repo,
-      tree: tree.data.tree
-    });
-
-    const newCommit = await octokit.git.createCommit({
-      ...repo,
-      tree: newTree.data.sha,
-      message: "Commit By reg!",
-      parents: [branch.data.commit.sha]
-    });
-
-    await octokit.git.updateRef({
-      ...repo,
-      ref: `heads/${ref}`,
-      sha: newCommit.data.sha,
-      force: true
-    });
-  };
-
+  //  const publish = async () => {
+  //    await Promise.all(
+  //      glob.sync("./report/**/*.*").map(async p => {
+  //        console.log("publish path", p);
+  //        const file = fs.readFileSync(p);
+  //        const content = Buffer.from(file).toString("base64");
+  //        const blob = await octokit.git.createBlob({
+  //          ...repo,
+  //          content,
+  //          encoding: "base64"
+  //        });
+  //
+  //        tree.data.tree.push({
+  //          path: path
+  //            .join(`${currentHash}`, p.replace("report/", ""))
+  //            .replace(/^\.\//, ""),
+  //          mode: "100644",
+  //          type: "blob",
+  //          sha: blob.data.sha
+  //        });
+  //      })
+  //    );
+  //
+  //    const stamp = await octokit.git.createBlob({
+  //      ...repo,
+  //      content: timestamp
+  //    });
+  //
+  //    tree.data.tree.push({
+  //      path: path
+  //        .join(`${currentHash}`, `${timestamp}.txt`)
+  //        .replace(/^\.\//, ""),
+  //      mode: "100644",
+  //      sha: stamp.data.sha
+  //    });
+  //
+  //    const newTree = await octokit.git.createTree({
+  //      ...repo,
+  //      tree: tree.data.tree
+  //    });
+  //
+  //    const newCommit = await octokit.git.createCommit({
+  //      ...repo,
+  //      tree: newTree.data.sha,
+  //      message: "Commit By reg!",
+  //      parents: [branch.data.commit.sha]
+  //    });
+  //
+  //    await octokit.git.updateRef({
+  //      ...repo,
+  //      ref: `heads/${ref}`,
+  //      sha: newCommit.data.sha,
+  //      force: true
+  //    });
+  //  };
+  //
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
 
   // Not PR
   if (typeof event.number === "undefined") {
-    await publish();
+    //    await publish();
     return;
   }
 
@@ -157,6 +160,7 @@ const run = async () => {
       return { data: [] };
     });
 
+  /*
   await Promise.all(
     (contents.data || [])
       .filter(file => {
@@ -179,7 +183,7 @@ const run = async () => {
           fs.writeFileSync(p, Buffer.from(response.data, "binary"));
         });
       })
-  );
+  );*/
 
   // console.log("download complete");
   // console.log("branch", branch);
@@ -200,7 +204,7 @@ const run = async () => {
 
   emitter.on("complete", async result => {
     console.log("result", result);
-    await publish();
+    //    await publish();
 
     const [owner, reponame] = event.repository.full_name.split("/");
     const url = `https://${owner}.github.io/${reponame}/reg${currentHash}/`;

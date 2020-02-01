@@ -5,7 +5,7 @@
   "description": "Node 12 template action",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "webpack",
     "test": "jest"
   },
   "repository": {
@@ -17,6 +17,9 @@
     "node",
     "setup"
   ],
+  "resolutions": {
+    "**/@octokit/rest": "16.41.1"
+  },
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
@@ -43,6 +46,9 @@
     "jest": "^24.8.0",
     "jest-circus": "^24.7.1",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.5.1"
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.5.1",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
   }
 }
