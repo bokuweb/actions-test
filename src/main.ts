@@ -2,11 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
 import { execSync } from "child_process";
-import * as path from "path";
-import glob from "glob";
-import mkdir from "make-dir";
 import cpx from "cpx";
-import axios from "axios";
 
 const compare = require("reg-cli");
 
