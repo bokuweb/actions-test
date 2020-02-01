@@ -211,10 +211,13 @@ const run = async () => {
     checkCRC32: true
   });
 
-  console.log(files);
-  files.files
+  // console.log(files);
+  console.log("aaaaaaaaaaaaaaaaa");
+  Object.keys(files.files)
+    .map(key => files.files[key])
     .filter(file => !file.dir)
     .forEach(file => {
+      console.log(file);
       const f = path.join("__reg__", "expected", path.basename(file.name));
       fs.mkdirSync(f);
       fs.writeFileSync(f, file._data);
