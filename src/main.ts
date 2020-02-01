@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
+import * as path from "path";
 import { execSync } from "child_process";
 import cpx from "cpx";
 
@@ -29,7 +30,7 @@ console.log(event);
 
 const [owner, reponame] = event.repository.full_name.split("/");
 
-const actual = core.getInput("actual_directory_path");
+const actual = core.getInput("actual-directory-path");
 
 console.log(owner, reponame);
 console.log(actual, "aaa");
@@ -146,7 +147,13 @@ const run = async () => {
   //    });
   //  };
   //
-  cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
+
+  console.log(path.join(actual, `**/*.{png,jpg,jpeg,tiff,bmp,gif}`));
+
+  cpx.copySync(
+    path.join(actual, `**/*.{png,jpg,jpeg,tiff,bmp,gif}`),
+    "./__reg__/actual"
+  );
 
   // Not PR
   if (typeof event.number === "undefined") {

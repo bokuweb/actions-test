@@ -14,3 +14,4 @@ jobs:
         with: # Set the secret as an input
           # secret: "${{ secrets.WR_TOKEN }}"
           secret: "${{ secrets.GITHUB_TOKEN }}"
+          actual-directory-path: "actual11"
