@@ -32,6 +32,10 @@ if (!event) {
 console.log(event);
 
 const run = async () => {
+  const runs = await octokit.actions.listRepoWorkflowRuns(repo);
+  console.log("runs");
+  console.log(runs);
+
   const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   const heads = await octokit.git.listRefs(repo);
   const head = heads.data[0];
@@ -60,7 +64,7 @@ const run = async () => {
   const tree = await octokit.git.getTree({
     ...repo,
     tree_sha: branch.data.commit.sha,
-    recursive: 1
+    recursive: "1"
   });
 
   const currentHash = (
@@ -82,14 +86,14 @@ const run = async () => {
           encoding: "base64"
         });
 
-        tree.data.tree.push({
-          path: path
-            .join(`${currentHash}`, p.replace("report/", ""))
-            .replace(/^\.\//, ""),
-          mode: "100644",
-          type: "blob",
-          sha: blob.data.sha
-        });
+        // tree.data.tree.push({
+        //   path: path
+        //     .join(`${currentHash}`, p.replace("report/", ""))
+        //     .replace(/^\.\//, ""),
+        //   mode: "100644",
+        //   type: "blob",
+        //   sha: blob.data.sha
+        // });
       })
     );
 
@@ -98,32 +102,32 @@ const run = async () => {
       content: timestamp
     });
 
-    tree.data.tree.push({
-      path: path
-        .join(`${currentHash}`, `${timestamp}.txt`)
-        .replace(/^\.\//, ""),
-      mode: "100644",
-      sha: stamp.data.sha
-    });
+    // tree.data.tree.push({
+    //   path: path
+    //     .join(`${currentHash}`, `${timestamp}.txt`)
+    //     .replace(/^\.\//, ""),
+    //   mode: "100644",
+    //   sha: stamp.data.sha
+    // });
 
-    const newTree = await octokit.git.createTree({
-      ...repo,
-      tree: tree.data.tree
-    });
+    // const newTree = await octokit.git.createTree({
+    //   ...repo,
+    //   tree: tree.data.tree
+    // });
 
-    const newCommit = await octokit.git.createCommit({
-      ...repo,
-      tree: newTree.data.sha,
-      message: "Commit By reg!",
-      parents: [branch.data.commit.sha]
-    });
+    // const newCommit = await octokit.git.createCommit({
+    //   ...repo,
+    //   tree: newTree.data.sha,
+    //   message: "Commit By reg!",
+    //   parents: [branch.data.commit.sha]
+    // });
 
-    await octokit.git.updateRef({
-      ...repo,
-      ref: `heads/${ref}`,
-      sha: newCommit.data.sha,
-      force: true
-    });
+    // await octokit.git.updateRef({
+    //   ...repo,
+    //   ref: `heads/${ref}`,
+    //   sha: newCommit.data.sha,
+    //   force: true
+    // });
   };
 
   cpx.copySync(`./actual/**/*.{png,jpg,jpeg,tiff,bmp,gif}`, "./report/actual");
@@ -147,7 +151,7 @@ const run = async () => {
     "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   );
 
-  const contents = await octokit.repos
+  const contents = (await octokit.repos
     .getContents({
       ...repo,
       path: `${targetHash}/actual`,
@@ -155,7 +159,7 @@ const run = async () => {
     })
     .catch(() => {
       return { data: [] };
-    });
+    })) as any;
 
   await Promise.all(
     (contents.data || [])
