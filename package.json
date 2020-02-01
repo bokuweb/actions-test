@@ -35,9 +35,7 @@
     "cpx": "^1.5.0",
     "glob": "^7.1.6",
     "make-dir": "^3.0.0",
-    "node-notifier": "^6.0.0",
-    "reg-cli": "^0.16.0",
-    "semver": "^7.1.2"
+    "reg-cli": "^0.16.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
