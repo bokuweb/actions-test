@@ -183,17 +183,30 @@ const run = async () => {
     console.error("Failed to find target run");
     return;
   }
-  const artifacts = await octokit.actions.listWorkflowRunArtifacts({
+  const res = await octokit.actions.listWorkflowRunArtifacts({
     ...repo,
-    run_id: targetRun.id
+    run_id: targetRun.id,
+    per_page: 100
   });
 
-  console.log("artifacts", artifacts.data);
-  console.log("artifacts", (artifacts.data as any).artifacts);
+  // console.log("artifacts", artifacts.data.);
+  // console.log("artifacts", (artifacts.data as any).artifacts);
 
+  const { artifacts } = res.data as any;
+  const latest = artifacts[artifacts.length - 1];
+
+  console.log("latest", latest);
+
+  const zip = await octokit.actions.downloadArtifact({
+    ...repo,
+    artifact_id: latest.id,
+    archive_format: "zip"
+  });
+
+  console.log(zip);
   /*  const contents = await octokit.repos
     .getContents({
-      ...repo,
+down      ...repo,
       path: `${targetHash}/actual`,
       ref: BRANCH_NAME
     })
