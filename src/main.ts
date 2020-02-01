@@ -12,7 +12,7 @@ const octokit = new github.GitHub(token);
 
 const { repo } = github.context;
 
-const BRANCH_NAME = "gh-pages";
+// const BRANCH_NAME = "gh-pages";
 
 let event;
 try {
@@ -27,10 +27,16 @@ if (!event) {
 
 console.log(event);
 
+const [owner, reponame] = event.repository.full_name.split("/");
+
+const actual = core.getInput("actualDirectory");
+
+console.log(owner, reponame);
+console.log(actual);
 const run = async () => {
   const runs = await octokit.actions.listRepoWorkflowRuns(repo);
-  console.log("==== runs ==== ", runs);
-  console.log(runs.data.workflow_runs);
+  // console.log("==== runs ==== ", runs);
+  // console.log(runs.data.workflow_runs);
 
   // const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
   //   const heads = await octokit.git.listRefs(repo);
