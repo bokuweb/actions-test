@@ -229,7 +229,7 @@ const run = async () => {
       console.log(f);
       await makeDir(path.dirname(f));
       console.log("bbbbb");
-      fs.writeFileSync(f, new TextEncoder().encode(file._data));
+      fs.writeFileSync(f, new Uint8Array(file._data));
     });
   console.log("=========");
   /*  const contents = await octokit.repos
@@ -303,9 +303,3 @@ down      ...repo,
 };
 
 run();
-
-function bufferFromString(str: string) {
-  const buffer = Buffer.alloc(str.length);
-  buffer.write(str);
-  return buffer;
-}
