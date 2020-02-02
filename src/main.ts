@@ -220,18 +220,20 @@ const run = async () => {
 
   // console.log(files);
   console.log("aaaaaaaaaaaaaaaa!!!!!!!!!!!!!a");
-  Object.keys(files.files)
-    .map(key => files.files[key])
-    .filter(file => !file.dir)
-    .forEach(async file => {
-      // console.log(file);
-      const f = path.join("__reg__", "expected", path.basename(file.name));
-      console.log(f);
-      await makeDir(path.dirname(f));
-      console.log("bbbbb");
-      console.log(str2ab(file._data));
-      fs.writeFileSync(f, str2ab(file._data));
-    });
+  await Promise.all(
+    Object.keys(files.files)
+      .map(key => files.files[key])
+      .filter(file => !file.dir)
+      .map(async file => {
+        // console.log(file);
+        const f = path.join("__reg__", "expected", path.basename(file.name));
+        console.log(f);
+        await makeDir(path.dirname(f));
+        console.log("bbbbb");
+        console.log(str2ab(file._data));
+        fs.writeFileSync(f, str2ab(file._data));
+      })
+  );
   console.log("=========");
   /*  const contents = await octokit.repos
     .getContents({
