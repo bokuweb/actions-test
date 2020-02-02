@@ -28,16 +28,13 @@ if (!event) {
   throw new Error("Failed to get github event.json..");
 }
 
-console.log(event);
+// console.log(event);
 
 const [owner, reponame] = event.repository.full_name.split("/");
 
 const actual = core.getInput("actual-directory-path");
 
-console.log(owner, reponame);
-console.log(actual, "aaa");
-
-console.log(process.env.INPUT_ACTUAL_DIRECTORY_PATH, "===-=-");
+// console.log(owner, reponame);
 
 // TODO: fetch all run
 const run = async () => {
@@ -219,22 +216,16 @@ const run = async () => {
   });
 
   // console.log(files);
-  console.log("aaaaaaaaaaaaaaaa!!!!!!!!!!!!!a");
   await Promise.all(
     Object.keys(files.files)
       .map(key => files.files[key])
       .filter(file => !file.dir)
       .map(async file => {
-        // console.log(file);
         const f = path.join("__reg__", "expected", path.basename(file.name));
-        console.log(f);
         await makeDir(path.dirname(f));
-        console.log("bbbbb");
-        console.log(str2ab(file._data));
         fs.writeFileSync(f, str2ab(file._data));
       })
   );
-  console.log("=========");
   /*  const contents = await octokit.repos
     .getContents({
 down      ...repo,
@@ -308,8 +299,7 @@ down      ...repo,
 run();
 
 function str2ab(str) {
-  console.log(str.length);
-  var array = new Uint8Array(str.length);
+  const array = new Uint8Array(str.length);
   for (var i = 0; i < str.length; i++) {
     array[i] = str.charCodeAt(i);
   }
