@@ -38,8 +38,12 @@ console.log(actual, "aaa");
 
 console.log(process.env.INPUT_ACTUAL_DIRECTORY_PATH, "===-=-");
 
+// TODO: fetch all run
 const run = async () => {
-  const runs = await octokit.actions.listRepoWorkflowRuns(repo);
+  const runs = await octokit.actions.listRepoWorkflowRuns({
+    ...repo,
+    per_page: 100
+  });
   // console.log("==== runs ==== ", runs);
   // console.log(runs.data.workflow_runs);
 
@@ -184,6 +188,8 @@ const run = async () => {
     console.error("Failed to find target run");
     return;
   }
+
+  // TODO: fetch all artifacts
   const res = await octokit.actions.listWorkflowRunArtifacts({
     ...repo,
     run_id: targetRun.id,
