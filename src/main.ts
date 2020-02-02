@@ -229,7 +229,7 @@ const run = async () => {
       console.log(f);
       await makeDir(path.dirname(f));
       console.log("bbbbb");
-      console.log(file._data);
+      console.log(str2ab(file._data));
       fs.writeFileSync(f, str2ab(file._data));
     });
   console.log("=========");
@@ -311,5 +311,5 @@ function str2ab(str) {
   for (var i = 0; i < str.length; i++) {
     array[i] = str.charCodeAt(i);
   }
-  return array.buffer;
+  return array;
 }
