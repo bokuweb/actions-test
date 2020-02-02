@@ -229,7 +229,7 @@ const run = async () => {
       console.log(f);
       await makeDir(path.dirname(f));
       console.log("bbbbb");
-      fs.writeFileSync(f, bufferFromString(file._data));
+      fs.writeFileSync(f, file._data);
     });
   console.log("=========");
   /*  const contents = await octokit.repos
@@ -294,7 +294,7 @@ down      ...repo,
 
     await octokit.issues.createComment({
       ...repo,
-      number: event.number,
+      issue_number: event.number,
       body: url
     });
 
