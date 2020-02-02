@@ -217,10 +217,12 @@ const run = async () => {
     .map(key => files.files[key])
     .filter(file => !file.dir)
     .forEach(file => {
-      console.log(file);
+      // console.log(file);
       const f = path.join("__reg__", "expected", path.basename(file.name));
+      console.log(f);
       fs.mkdirSync(f);
-      fs.writeFileSync(f, file._data);
+      console.log("bbbbb");
+      fs.writeFileSync(f, bufferFromString(file._data));
     });
   console.log("=========");
   /*  const contents = await octokit.repos
@@ -294,3 +296,9 @@ down      ...repo,
 };
 
 run();
+
+function bufferFromString(str: string) {
+  const buffer = Buffer.alloc(str.length);
+  buffer.write(str);
+  return buffer;
+}
