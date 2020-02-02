@@ -306,6 +306,7 @@ down      ...repo,
 run();
 
 function str2ab(str) {
+  console.log(str.length);
   var array = new Uint8Array(str.length);
   for (var i = 0; i < str.length; i++) {
     array[i] = str.charCodeAt(i);
