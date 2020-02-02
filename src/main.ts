@@ -229,6 +229,7 @@ const run = async () => {
       console.log(f);
       await makeDir(path.dirname(f));
       console.log("bbbbb");
+      console.log(file._data);
       fs.writeFileSync(f, str2ab(file._data));
     });
   console.log("=========");
@@ -305,10 +306,9 @@ down      ...repo,
 run();
 
 function str2ab(str) {
-  var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-  var bufView = new Uint16Array(buf);
-  for (var i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
+  var array = new Uint8Array(str.length);
+  for (var i = 0; i < str.length; i++) {
+    array[i] = str.charCodeAt(i);
   }
-  return buf;
+  return array.buffer;
 }
