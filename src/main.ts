@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
 import cpx from "cpx";
+import makeDir from "make-dir";
 
 const compare = require("reg-cli");
 const NodeZip = require("node-zip");
@@ -222,11 +223,11 @@ const run = async () => {
   Object.keys(files.files)
     .map(key => files.files[key])
     .filter(file => !file.dir)
-    .forEach(file => {
+    .forEach(async file => {
       // console.log(file);
       const f = path.join("__reg__", "expected", path.basename(file.name));
       console.log(f);
-      fs.mkdirSync(f);
+      await makeDir(path.dirname(f));
       console.log("bbbbb");
       fs.writeFileSync(f, bufferFromString(file._data));
     });
