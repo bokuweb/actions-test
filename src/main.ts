@@ -5,6 +5,7 @@ import * as path from "path";
 import { execSync } from "child_process";
 import cpx from "cpx";
 import makeDir from "make-dir";
+import { promisify } from "util";
 
 const compare = require("reg-cli");
 const NodeZip = require("node-zip");
@@ -12,10 +13,9 @@ const NodeZip = require("node-zip");
 const token = core.getInput("secret");
 
 const octokit = new github.GitHub(token);
+const writeFileAsync = promisify(fs.writeFile);
 
 const { repo } = github.context;
-
-// const BRANCH_NAME = "gh-pages";
 
 let event;
 try {
@@ -28,13 +28,7 @@ if (!event) {
   throw new Error("Failed to get github event.json..");
 }
 
-// console.log(event);
-
-const [owner, reponame] = event.repository.full_name.split("/");
-
 const actual = core.getInput("actual-directory-path");
-
-// console.log(owner, reponame);
 
 // TODO: fetch all run
 const run = async () => {
@@ -42,42 +36,6 @@ const run = async () => {
     ...repo,
     per_page: 100
   });
-  // console.log("==== runs ==== ", runs);
-  // console.log(runs.data.workflow_runs);
-
-  // const timestamp = `${Math.floor(new Date().getTime() / 1000)}`;
-  //   const heads = await octokit.git.listRefs(repo);
-  //   const head = heads.data[0];
-  //   const headCommit = await octokit.git.getCommit({
-  //     ...repo,
-  //     commit_sha: head.object.sha
-  //   });
-
-  // console.log("current hash = ", head.object.sha);
-
-  // const branches = await octokit.repos.listBranches(repo);
-  // const found = branches.data.find(b => b.name === BRANCH_NAME);
-
-  // if (!found) {
-  //   await octokit.git.createRef({
-  //     ...repo,
-  //     ref: `refs/heads/${BRANCH_NAME}`,
-  //     sha: headCommit.data.sha
-  //   });
-  // }
-
-  //   const branch = await octokit.repos
-  //     .getBranch({ ...repo, branch: BRANCH_NAME })
-  //     .catch(e => {
-  //       throw new Error("Failed to fetch branch.");
-  //     });
-
-  // const ref = branch.data.name;
-  // const tree = await octokit.git.getTree({
-  //   ...repo,
-  //   tree_sha: branch.data.commit.sha,
-  //   recursive: "1"
-  // });
 
   const currentHash = (
     event.after ||
@@ -93,65 +51,6 @@ const run = async () => {
   );
 
   console.log("current run = ", currentRun);
-
-  //  const publish = async () => {
-  //    await Promise.all(
-  //      glob.sync("./report/**/*.*").map(async p => {
-  //        console.log("publish path", p);
-  //        const file = fs.readFileSync(p);
-  //        const content = Buffer.from(file).toString("base64");
-  //        const blob = await octokit.git.createBlob({
-  //          ...repo,
-  //          content,
-  //          encoding: "base64"
-  //        });
-  //
-  //        tree.data.tree.push({
-  //          path: path
-  //            .join(`${currentHash}`, p.replace("report/", ""))
-  //            .replace(/^\.\//, ""),
-  //          mode: "100644",
-  //          type: "blob",
-  //          sha: blob.data.sha
-  //        });
-  //      })
-  //    );
-  //
-  //    const stamp = await octokit.git.createBlob({
-  //      ...repo,
-  //      content: timestamp
-  //    });
-  //
-  //    tree.data.tree.push({
-  //      path: path
-  //        .join(`${currentHash}`, `${timestamp}.txt`)
-  //        .replace(/^\.\//, ""),
-  //      mode: "100644",
-  //      sha: stamp.data.sha
-  //    });
-  //
-  //    const newTree = await octokit.git.createTree({
-  //      ...repo,
-  //      tree: tree.data.tree
-  //    });
-  //
-  //    const newCommit = await octokit.git.createCommit({
-  //      ...repo,
-  //      tree: newTree.data.sha,
-  //      message: "Commit By reg!",
-  //      parents: [branch.data.commit.sha]
-  //    });
-  //
-  //    await octokit.git.updateRef({
-  //      ...repo,
-  //      ref: `heads/${ref}`,
-  //      sha: newCommit.data.sha,
-  //      force: true
-  //    });
-  //  };
-  //
-
-  console.log(path.join(actual, `**/*.{png,jpg,jpeg,tiff,bmp,gif}`));
 
   cpx.copySync(
     path.join(actual, `**/*.{png,jpg,jpeg,tiff,bmp,gif}`),
@@ -169,19 +68,10 @@ const run = async () => {
     { encoding: "utf8" }
   ).slice(0, 7);
 
-  console.log(
-    "+++++++++++++++++++++++ targetHash ++++++++++++++++++++++++++++++++++++++++"
-  );
-  console.log(targetHash);
-  console.log(
-    "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-  );
-
   const targetRun = runs.data.workflow_runs.find(run =>
     run.head_sha.startsWith(targetHash)
   );
 
-  console.log("targetRun", targetRun);
   if (!targetRun) {
     console.error("Failed to find target run");
     return;
@@ -194,13 +84,9 @@ const run = async () => {
     per_page: 100
   });
 
-  // console.log("artifacts", artifacts.data.);
-  // console.log("artifacts", (artifacts.data as any).artifacts);
-
+  // Octokit's type definition is wrong now.
   const { artifacts } = res.data as any;
   const latest = artifacts[artifacts.length - 1];
-
-  console.log("latest", latest);
 
   const zip = await octokit.actions.downloadArtifact({
     ...repo,
@@ -208,14 +94,11 @@ const run = async () => {
     archive_format: "zip"
   });
 
-  console.log(zip);
-
   const files = new NodeZip(zip.data, {
     base64: false,
     checkCRC32: true
   });
 
-  // console.log(files);
   await Promise.all(
     Object.keys(files.files)
       .map(key => files.files[key])
@@ -223,46 +106,9 @@ const run = async () => {
       .map(async file => {
         const f = path.join("__reg__", "expected", path.basename(file.name));
         await makeDir(path.dirname(f));
-        fs.writeFileSync(f, str2ab(file._data));
+        await writeFileAsync(f, str2ab(file._data));
       })
   );
-  /*  const contents = await octokit.repos
-    .getContents({
-down      ...repo,
-      path: `${targetHash}/actual`,
-      ref: BRANCH_NAME
-    })
-    .catch(() => {
-      return { data: [] };
-    });*/
-
-  /*
-  await Promise.all(
-    (contents.data || [])
-      .filter(file => {
-        return (
-          !!file.download_url &&
-          [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"].includes(
-            path.extname(file.download_url)
-          ) &&
-          file.path.includes(targetHash)
-        );
-      })
-      .map(file => {
-        return axios({
-          method: "get",
-          url: file.download_url,
-          responseType: "arraybuffer"
-        }).then(response => {
-          const p = path.join("./report/expected", path.basename(file.path));
-          mkdir.sync(path.dirname(p));
-          fs.writeFileSync(p, Buffer.from(response.data, "binary"));
-        });
-      })
-  );*/
-
-  // console.log("download complete");
-  // console.log("branch", branch);
 
   const emitter = compare({
     actualDir: "./__reg__/actual",
@@ -275,24 +121,20 @@ down      ...repo,
     urlPrefix: ""
   });
 
-  emitter.on("compare", async (compareItem: { type: string; path: string }) => {
-    console.log(compareItem);
-  });
+  emitter.on(
+    "compare",
+    async (compareItem: { type: string; path: string }) => {}
+  );
 
   emitter.on("complete", async result => {
-    console.log("result", result);
-    //    await publish();
-
     const [owner, reponame] = event.repository.full_name.split("/");
-    const url = `https://${owner}.github.io/${reponame}/reg${currentHash}/`;
+    const url = `https://bokuweb.github.io/reg-action-report/?owner=${owner}&repository=${reponame}&run_id=${currentRun.id}`;
 
     await octokit.issues.createComment({
       ...repo,
       issue_number: event.number,
       body: url
     });
-
-    console.log("done");
   });
 };
 
